@@ -161,7 +161,7 @@ mv *".JPG" $OVERLAP_PLOTS_DIR
 cd $SCRIPT_DIR
 
 
-## 6.12 Separate files by service user
+## Separate files by service user
 #
 
 python sort_service_users_cnvs.py \
