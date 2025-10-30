@@ -4,7 +4,7 @@ An integrated pipeline for detecting and analyzing copy number variations (CNVs)
 
 ## Overview
 
-Much of this file is adapted from the SOP compiled by Alexandra Evans.
+Much of this file is adapted from the SOP compiled by Alexandra Evans and combines scripts developed by Ellis Pires.
 
 ## Prerequisits
 

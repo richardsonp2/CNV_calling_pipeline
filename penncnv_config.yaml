@@ -1,0 +1,56 @@
+# PennCNV Pipeline Configuration
+# Save as: penncnv_config.yaml
+
+# SLURM Job Settings
+slurm:
+  job_name: "penncnvcalling"
+  account: "scw1354"
+  partition: "c_compute_neuro1"
+  time: "00-12:00:00"
+  mem_per_cpu: "10G"
+  cpus_per_task: 4
+
+# CNV Detection Parameters
+cnv_detection:
+  use_test_mode: true
+  use_confidence: true
+  hmm_file: "auto"  # "auto" will use default from PennCNV installation
+
+# CNV Filtering Thresholds
+cnv_filtering:
+  min_snps: 10              # Minimum number of SNPs in a CNV call
+  min_length: "100k"        # Minimum CNV length (e.g., "100k", "50k")
+  max_lrr_sd: 0.3           # Maximum LRR standard deviation for QC
+
+# Clean CNV Settings
+clean_cnv:
+  use_bp: true              # Use base pair positions
+  combine_segments: true    # Combine adjacent segments
+
+# Directory Structure (relative to base directory)
+directories:
+  split_files: "split_files"
+  raw_cnvs: "raw_cnvs"
+  clean_cnvs: "clean_cnvs"
+  qc_cnvs: "qc_cnvs"
+  overlap_novel: "overlap_novel"
+  plots: "plots"
+  logs: "logs"
+
+# Pathfinder settings
+pathfinder:
+  language: "R"
+  verbosity: "light"
+
+# Plotting Options
+plotting:
+  generate_all_plots: true
+  generate_novel_plots: true
+  generate_overlap_plots: true
+  format: "plot"            # PennCNV plot format
+
+# Logging
+logging:
+  verbose: true
+  timestamp_format: "%Y-%m-%d %H:%M:%S"
+  log_each_step: true
