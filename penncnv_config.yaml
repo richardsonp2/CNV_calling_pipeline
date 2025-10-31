@@ -1,6 +1,12 @@
 # PennCNV Pipeline Configuration
 # Save as: penncnv_config.yaml
 
+# Logging
+logging:
+  verbose: true
+  timestamp_format: "%Y-%m-%d %H:%M:%S"
+  log_each_step: true
+
 # SLURM Job Settings
 slurm:
   job_name: "penncnvcalling"
@@ -49,8 +55,8 @@ plotting:
   generate_overlap_plots: true
   format: "plot"            # PennCNV plot format
 
-# Logging
-logging:
-  verbose: true
-  timestamp_format: "%Y-%m-%d %H:%M:%S"
-  log_each_step: true
+# R pipeline options
+thresholds:
+  LRR_SD_threshold: 0.3
+  num_cnv_threshold: 100
+  waveform_threshold: 0.03 #Penn CNV suggest 0.04 might be a reasonable cutoff

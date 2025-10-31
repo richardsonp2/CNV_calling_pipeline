@@ -57,6 +57,6 @@ The second is the pfb file taken from /nfs/neurocluster/databank/CNV_resources/
 The third is the gccode file taken from /nfs/neurocluster/databank/CNV_resources/
 the fourth is the main CNV file
 
-    ```{bash}
-    sbatch penncnv-calling.sh /scratch/c.c1837975/cnv_calling/<Genome_Studio_output>.txt /scratch/c.c1837975/cnv_calling/PsychChip_PFB.pfb 
-    ```
+```bash
+sbatch penncnv-calling.sh /scratch/c.c1837975/cnv_calling/<Genome_Studio_output>.txt /scratch/c.c1837975/cnv_calling/PsychChip_PFB.pfb 
+```

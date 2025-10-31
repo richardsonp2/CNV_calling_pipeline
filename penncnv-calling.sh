@@ -23,17 +23,90 @@ if [ ! -f "$CONFIG_FILE" ]; then
     exit 1
 fi
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+# Gather input files
+PENN_CNV_FILES_DIR="${SCRIPT_DIR}/penn_cnv_files"
+
+
+INPUT_FILE=$1
+PFB_FILE=("$PENN_CNV_FILES_DIR"/*.pfb)
+GCM_FILE=("$PENN_CNV_FILES_DIR"/*.gcmodel)
+MASTER_LIST=("$PENN_CNV_FILES_DIR"/*.txt)
+
+
+# check input first
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "ERROR: Required file not found: $INPUT_FILE" >&2
+    exit 1
+fi
+
+# check pfb
+if [ ${#PFB_FILE[@]} -eq 0 ]; then
+    echo "ERROR: No .pfb files found in $PENN_CNV_FILES_DIR" >&2
+    exit 1
+fi
+
+# check gcmodel
+if [ ${#GCM_FILE[@]} -eq 0 ]; then
+    echo "ERROR: No .gcmodel files found in $PENN_CNV_FILES_DIR" >&2
+    exit 1
+fi
+
+# check txt master list
+if [ ${#MASTER_LIST[@]} -eq 0 ]; then
+    echo "ERROR: No .txt master list found in $PENN_CNV_FILES_DIR" >&2
+    exit 1
+fi
+
+# Derive sample prefix
+SAMPLE_PREFIX=$(basename "$INPUT_FILE" | sed 's/\(.*\)\..*/\1/')
+
+SCRATCH_BASE="/scratch/${USER}"
+
+#If scratch does not exist, eg using local for testing, set up tmp folder structure. 
+if [ ! -d "$SCRATCH_BASE" ]; then 
+  echo "/scratch not found using temp local dir instead!"
+  SCRATCH_BASE="$(pwd)/tmp_scratch"
+  mkdir -p "$SCRATCH_BASE"
+fi
+
+
+BASE_DIR="${SCRATCH_BASE}/${SAMPLE_PREFIX}"
+OUTPUT_DIR="${BASE_DIR}/output"
+RAW_CNVS_DIR="${OUTPUT_DIR}/raw_cnvs"
+LOGS_DIR="${OUTPUT_DIR}/logs"
+
+
+
+mkdir -p "$RAW_CNVS_DIR" "$LOGS_DIR"
 ## Accessing PennCNV and associated files
 #
 
-module load penncnv
-module load R
-module load anaconda
-module load python
+# This is to allow this script to run on local and HPC
+if command -v module >/dev/null 2>&1; then
+    module load penncnv || true
+    module load R || true
+    module load anaconda
+    module load python
+else
+    # fallback: local installs
+    export PATH="$HOME/penncnv:$PATH"
+    export PATH="$HOME/miniconda3/bin:$PATH"   # or wherever your R is
+fi
+
 eval $(python3 parse_config.py "$CONFIG_FILE")
 
 ## Setup Logging
 #
+# Create main log file
+#mkdir -p "${OUTPUT_DIR}/${CFG_DIRECTORIES_LOGS}"
+MAIN_LOG="${LOGS_DIR}/${SAMPLE_PREFIX}_pipeline.log"
+PENNCNV_LOG="${LOGS_DIR}/${SAMPLE_PREFIX}_penncnv.log"
+RAW_CNV_OUT="${RAW_CNVS_DIR}/${SAMPLE_PREFIX}.rawcnv"
+
+
+
 log_message() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$MAIN_LOG"
 }
@@ -42,27 +115,8 @@ log_error() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1" | tee -a "$MAIN_LOG" >&2
 }
 
-INPUT_FILE=$1
-PFB_FILE="$2"
-GCM_FILE="$3"
-MASTER_LIST="$4"
-
-# Validate input files
-for file in "$INPUT_FILE" "$PFB_FILE" "$GCM_FILE" "$MASTER_LIST"; do
-    if [ ! -f "$file" ]; then
-        echo "ERROR: Required file not found: $file" >&2
-        exit 1
-    fi
-done
-
-SAMPLE_PREFIX=(`basename "$INPUT_FILE" | sed 's/\(.*\)\..*/\1/'`)
-BASE_DIR="/scratch/${USER}/${SAMPLE_PREFIX}"
-OUTPUT_DIR="${BASE_DIR}/output"
-
-# Create main log file
-mkdir -p "${OUTPUT_DIR}/${CFG_DIRECTORIES_LOGS}"
-MAIN_LOG="${OUTPUT_DIR}/${CFG_DIRECTORIES_LOGS}/${SAMPLE_PREFIX}_pipeline.log"
-
+log_message "=============================="
+log_message "=============================="
 log_message "=== Starting PennCNV Pipeline for ${SAMPLE_PREFIX} ==="
 log_message "Input file: $INPUT_FILE"
 log_message "PFB file: $PFB_FILE"
@@ -74,8 +128,10 @@ log_message "Config file: $CONFIG_FILE"
 ## Splitting the Files
 #
 log_message "Step 1: Splitting input files"
-
+echo "OUTPUT_DIR IS: ${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
 SPLIT_FILES_DIR="${OUTPUT_DIR}/split_files"
+echo "SPLIT_FILES_DIR IS: ${SPLIT_FILES_DIR}"
 mkdir -p "${SPLIT_FILES_DIR}"
 rm -rf "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."*
 
@@ -101,8 +157,11 @@ rm -rf "logs/${SAMPLE_PREFIX}.rawcnv.log"
 
 HMM_FILE="$(dirname `which detect_cnv.pl`)/lib/hhall.hmm"
 
-SCRIPT_DIR=$PWD
-cd ${SPLIT_FILES_DIR}
+
+#SCRIPT_DIR=$PWD
+cd "$BASE_DIR"
+
+echo "${LOGS_DIR}/${SAMPLE_PREFIX}"
 
 detect_cnv.pl \
   -test \
@@ -110,9 +169,12 @@ detect_cnv.pl \
   -hmm ${HMM_FILE} \
   -pfb ${PFB_FILE} \
   -gcmodel ${GCM_FILE} \
-  -log "${SCRIPT_DIR}/logs/${SAMPLE_PREFIX}.rawcnv.log" \
-  ${SAMPLE_PREFIX}.* \
-  -output "${RAW_CNVS_DIR}/${SAMPLE_PREFIX}.rawcnv" \
+  -log "$PENNCNV_LOG" \
+  "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
+  -output "$RAW_CNV_OUT" \
+  >>"$PENNCNV_LOG" 2>&1 
+
+
 
 cd $SCRIPT_DIR
 log_message "Raw CNV detection complete"
@@ -129,6 +191,7 @@ clean_cnv.pl \
   -bp -signalfile ${PFB_FILE} \
   -output "${CLEAN_CNVS_DIR}/${SAMPLE_PREFIX}.clean.rawcnv"
 
+log_message "Cleaning and merging CNV complete"
 
 ## Sample Level And Call Level Quality Control
 #
@@ -147,7 +210,12 @@ filter_cnv.pl \
   -qcsumout "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.qcsum" \
   -output "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.goodcnv"
 
+log_message "Quality control complete"
 
+
+# The rest of this is python stuff and plotting. Can restore this later, but for now lets use R?
+
+: '
 ## Overlapping and novel good CNVs
 #
 log_message "Step 5: Identifying overlapping and novel CNVs..."
@@ -250,3 +318,4 @@ python sort_service_users_cnvs.py \
 /bin/bash ./sort_service_users_files.sh $NOVEL_PLOTS_DIR
 /bin/bash ./sort_service_users_files.sh $OVERLAP_PLOTS_DIR
 
+'
