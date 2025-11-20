@@ -205,7 +205,8 @@ filter_cnv.pl \
   -numsnp 10 \
   -length 100k \
   -qclrrsd 0.3 \
-  -qclogfile "logs/${SAMPLE_PREFIX}.rawcnv.log" \
+  -qclogfile "$PENNCNV_LOG" \
+  "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
   -qcpassout "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.qcpass" \
   -qcsumout "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.qcsum" \
   -output "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.goodcnv"
