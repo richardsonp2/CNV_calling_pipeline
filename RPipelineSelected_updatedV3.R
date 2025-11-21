@@ -852,15 +852,23 @@ write.csv(CalledCNVS,
 
 ################################################################################################
 
+non_iPS_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
+
+# A lot of this is copy paste. Make into a simple check#``
+
 invisible(lapply(unique(patho.criteria.met$ID),function(x){
-  #browser()
+  browser()
   patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
   
   if(nrow(patho.id)==1){
-    patho.cnv.lower.coords=as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]*1.3)
+    
+    name <- 
+    
+    
+    patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]*1.3)
     patho.cnv.upper.coords=as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]*1.3)
     patho.cnv_chr=as.numeric(as.character(patho.id[,9]))
-    cnv.raw=as.data.frame(fread(input=paste("C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/non-iPS/",x,sep=""),header=T,sep="\t"))# all need to be in same folder
+    cnv.raw=as.data.frame(fread(input=x),header=T,sep="\t")# all need to be in same folder
     cnv.raw.params=cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
     cnv.raw.params$GROUP=c("Probes outside called CNV")
     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
@@ -870,29 +878,40 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     baf.col=grep("Allele",names(cnv.raw.params))
     logr.col=grep("Log",names(cnv.raw.params))
     
-    baf=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,baf.col],color=as.factor(GROUP))) +
-      geom_point(shape=1) +
-      xlab("Base Position")+
-      ylab("B-Allele Frequency")+
-      ggtitle(paste(x,patho.id$V1,sep=" "))+
-      geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
-      geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
-      geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
-      ylim(c(0,1))+
-      labs(color="CNV Probe Legend")
     
+    # This should work, but if it's completely broken other functions below
+    base_position_figure <- function(type = "baf"){
+      
+      if (type == "baf"){
+        y_params = cnv.raw.params[,baf.col]
+        y_title <- "B-Allele Frequency"
+      }
+      else if (type == "lrr"){
+        y_params = cnv.raw.params[,logr.col]
+        y_title <- "Log R Ratio"
+      }
+      else {
+        stop("Unknown type. Use 'baf' or 'lrr'.")
+      }
+      
     
+      
+      figure=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=y_params,color=as.factor(GROUP))) +
+        geom_point(shape=1) +
+        xlab("Base Position")+
+        ylab(y_title)+
+        ggtitle(paste(x,patho.id$V1,sep=" "))+
+        geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
+        geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
+        geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
+        ylim(c(0,1))+
+        labs(color="CNV Probe Legend")
+      
+      return (figure)
+    }
     
-    lrr=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,logr.col],color=as.factor(GROUP))) +
-      geom_point(shape=1) +
-      xlab("Base Position")+
-      ylab("Log R Ratio")+
-      ylim(c(-1,1))+
-      geom_hline(yintercept=0, linetype="dashed", color = "Black")+
-      geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
-      geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
-      labs(color="CNV Probe Legend")
-    
+    baf <- base_position_figure("baf")
+    lrr <- base_position_figure("lrr")
     
     
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
@@ -908,36 +927,34 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       patho.cnv.lower.coords=as.numeric(as.character(patho.id[y,10]))-(patho.id[y,3]*1.3)
       patho.cnv.upper.coords=as.numeric(as.character(patho.id[y,11]))+(patho.id[y,3]*1.3)
       patho.cnv_chr=as.numeric(as.character(patho.id[y,9]))
-      cnv.raw=as.data.frame(fread(paste0("C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/non-iPS/",x,sep=""),header=T,sep="\t"))
+      cnv.raw=as.data.frame(fread(paste0(non_iPS_dir,x,sep=""),header=T,sep="\t"))
       cnv.raw.params=cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
       cnv.raw.params$GROUP=c("Probes outside called CNV")
       cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[y,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[y,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
       cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
       
       
-      baf.col=grep("Allele",names(cnv.raw.params))
-      logr.col=grep("Log",names(cnv.raw.params))
-      
-      baf=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,baf.col],color=as.factor(GROUP))) +
-        geom_point(shape=1) +
-        xlab("Base Position")+
-        ylab("B-Allele Frequency")+
-        ggtitle(paste(x,patho.id$V1,sep=" "))+
-        geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
-        geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
-        geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
-        ylim(c(0,1))+
-        labs(color="CNV Probe Legend")
-      
-      lrr=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,logr.col],color=as.factor(GROUP))) +
-        geom_point(shape=1) +
-        xlab("Base Position")+
-        ylab("Log R Ratio")+
-        ylim(c(-1,1))+
-        geom_hline(yintercept=0, linetype="dashed", color = "Black")+
-        geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
-        geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
-        labs(color="CNV Probe Legend")
+
+      # baf=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,baf.col],color=as.factor(GROUP))) +
+      #   geom_point(shape=1) +
+      #   xlab("Base Position")+
+      #   ylab("B-Allele Frequency")+
+      #   ggtitle(paste(x,patho.id$V1,sep=" "))+
+      #   geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
+      #   geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
+      #   geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
+      #   ylim(c(0,1))+
+      #   labs(color="CNV Probe Legend")
+      # 
+      # lrr=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,logr.col],color=as.factor(GROUP))) +
+      #   geom_point(shape=1) +
+      #   xlab("Base Position")+
+      #   ylab("Log R Ratio")+
+      #   ylim(c(-1,1))+
+      #   geom_hline(yintercept=0, linetype="dashed", color = "Black")+
+      #   geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
+      #   geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
+      #   labs(color="CNV Probe Legend")
       
       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
       

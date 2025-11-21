@@ -103,6 +103,8 @@ eval $(python3 parse_config.py "$CONFIG_FILE")
 #mkdir -p "${OUTPUT_DIR}/${CFG_DIRECTORIES_LOGS}"
 MAIN_LOG="${LOGS_DIR}/${SAMPLE_PREFIX}_pipeline.log"
 PENNCNV_LOG="${LOGS_DIR}/${SAMPLE_PREFIX}_penncnv.log"
+
+
 RAW_CNV_OUT="${RAW_CNVS_DIR}/${SAMPLE_PREFIX}.rawcnv"
 
 
@@ -124,7 +126,7 @@ log_message "GCM file: $GCM_FILE"
 log_message "Master list: $MASTER_LIST"
 log_message "Config file: $CONFIG_FILE"
 
-
+if false; then
 ## Splitting the Files
 #
 log_message "Step 1: Splitting input files"
@@ -192,13 +194,26 @@ clean_cnv.pl \
   -output "${CLEAN_CNVS_DIR}/${SAMPLE_PREFIX}.clean.rawcnv"
 
 log_message "Cleaning and merging CNV complete"
+fi
+
+############## FOR NOW UP TO HERE WORKS!
+
+CLEAN_CNVS_DIR="${OUTPUT_DIR}/clean_cnvs"
+SPLIT_FILES_DIR="${OUTPUT_DIR}/split_files"
+
+
+
+
+
 
 ## Sample Level And Call Level Quality Control
 #
 log_message "Step 4: Applying quality control filters..."
+log_message "UP TO HERE COMPLETE?"
 
 QC_CNVS_DIR="${OUTPUT_DIR}/qc_cnvs"
 mkdir -p "${QC_CNVS_DIR}"
+
 
 filter_cnv.pl \
   "${CLEAN_CNVS_DIR}/${SAMPLE_PREFIX}.clean.rawcnv" \
@@ -206,7 +221,6 @@ filter_cnv.pl \
   -length 100k \
   -qclrrsd 0.3 \
   -qclogfile "$PENNCNV_LOG" \
-  "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
   -qcpassout "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.qcpass" \
   -qcsumout "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.qcsum" \
   -output "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.goodcnv"
