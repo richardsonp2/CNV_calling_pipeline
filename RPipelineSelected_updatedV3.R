@@ -51,12 +51,7 @@ cnv_include <- read.table(
   header = TRUE
 )
 
-# cnv_qual=read.table(file="./tmp_scratch/FullDataTable_reclustered/   e/FullDataTable_reclustered.qcsum",header=T,stringsAsFactors = F)
-# cnv.include=read.table("C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/FullDataTable_reclustered.qcpass",header=F)
-# cnv_qual=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/FullDataTable_reclustered.qcsum",header=T,stringsAsFactors = F)
-# cnv.include=read.table("C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/FullDataTable_reclustered.qcpass",header=F)
-
-#####################################################################################################
+################################################################################
 ### We get a list of indiviuals who have failed and passed QC based on our predefined parameters
 exclude.individuals <- cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >= WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
 exclude.individuals$GROUP="QC Fail"
