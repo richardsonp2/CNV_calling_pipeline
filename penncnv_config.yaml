@@ -61,3 +61,4 @@ thresholds:
   num_cnv_threshold: 100
   waveform_threshold: 0.03 #Penn CNV suggest 0.04 might be a reasonable cutoff
   sample_prefix: "FullDataTable_reclustered"
+
