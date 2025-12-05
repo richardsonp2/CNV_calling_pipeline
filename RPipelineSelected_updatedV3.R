@@ -14,7 +14,7 @@ library("yaml")
 
 #setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
-# All of the variables to set here including addresses are set in the yaml file. 
+# All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
 
 LRR_SD_thres=config$thresholds[[1]]
@@ -32,7 +32,7 @@ cnv_kk_file <- "./penn_cnv_files/CNVS.KK.2019.Sorted.txt"
 
 cnv_qual <- read.table(
   file = file.path(
-    "./tmp_scratch",
+    "./tmp_scratch", # NEED TO MODIFY THESE FOR HPC WORK
     prefix,
     "output",
     "qc_cnvs",
@@ -51,12 +51,7 @@ cnv_include <- read.table(
   header = TRUE
 )
 
-# cnv_qual=read.table(file="./tmp_scratch/FullDataTable_reclustered/   e/FullDataTable_reclustered.qcsum",header=T,stringsAsFactors = F)
-# cnv.include=read.table("C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/FullDataTable_reclustered.qcpass",header=F)
-# cnv_qual=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/FullDataTable_reclustered.qcsum",header=T,stringsAsFactors = F)
-# cnv.include=read.table("C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/FullDataTable_reclustered.qcpass",header=F)
-
-#####################################################################################################
+################################################################################
 ### We get a list of indiviuals who have failed and passed QC based on our predefined parameters
 exclude.individuals <- cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >= WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
 exclude.individuals$GROUP="QC Fail"
@@ -112,7 +107,7 @@ exclude.individuals=cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= 
 cnv_qual=cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
 
 
-# Can probably use this function above PR 
+# Can probably use this function above PR
 plot_function <- function(xvar, group_length = 1){
 
   # map input to pretty label
@@ -120,11 +115,11 @@ plot_function <- function(xvar, group_length = 1){
     "WF" = "Wave Factor",
     "LRR_SD" = "LRR SD"
   )
-  
+
   plot=ggplot(cnv_qual,aes(x=.data[[xvar]],y=NumCNV,color=GROUP)) +
     geom_point(shape=1) +
     xlab(xlabels[[xvar]]) +
-    ylab("N CNVs") 
+    ylab("N CNVs")
     if (group_length == 1){
       plot <- plot +
       scale_color_manual(values=c("#56B4E9"))+
@@ -197,7 +192,7 @@ if (length(unique(cnv_qual$GROUP)) == 1){
 #     scale_color_manual(values=c("#E69F00","#56B4E9"))+
 #     theme(legend.position="bottom")
 # }
-# Probably can put this in a fucntion. But only 1 repeat so far. Check rest of script PR 
+# Probably can put this in a fucntion. But only 1 repeat so far. Check rest of script PR
 
 plot_3 <- ggplot(cnv_qual, aes(x=BAF_drift)) + geom_histogram(alpha=.5, position="identity",colour="black", fill="white")+
   xlab("B-Allele Frequency Drift")+
@@ -273,53 +268,53 @@ cnv_neuro_beta <- unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV_Calls_HQ)
   cnv_end <- CNV_Calls_HQ[x,11]
 
   ### CNV spans entire region
-  cnv_neurodev.match <- cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr & cnv_start<=cnv_neurodev$START & cnv_end>=cnv_neurodev$END),] 
-  
+  cnv_neurodev.match <- cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr & cnv_start<=cnv_neurodev$START & cnv_end>=cnv_neurodev$END),]
+
   if(nrow(cnv_neurodev.match)>0){
     cnv.prop=1
     cnv_neurodev.match=cbind(cnv_neurodev.match,cnv.prop)
   } else if(nrow(cnv_neurodev.match)==0){
-    
+
     ### CNV start is less than the start of the nd cnv and end of the CNV is less than than end of the nd cnv
     cnv_neurodev.match=cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr & cnv_start<=cnv_neurodev$START & cnv_end<=cnv_neurodev$END & cnv_end>=cnv_neurodev$START),]
-    
+
     if(nrow(cnv_neurodev.match)>0){
       cnv_neurodev.match.start=cnv_neurodev.match$START
       cnv_neurodev.match.end=cnv_neurodev.match$END
-      
+
       cnv.prop=(cnv_end-cnv_neurodev.match$START)/(cnv_neurodev.match.end-cnv_neurodev.match.start)
       cnv_neurodev.match=cbind(cnv_neurodev.match,cnv.prop)
-      
-    } 
+
+    }
     ### CNV start is greater than start of nd cnv and ends after the end of the nd region
     else if(nrow(cnv_neurodev.match)==0){
       cnv_neurodev.match=cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr & cnv_start>=cnv_neurodev$START & cnv_end>=cnv_neurodev$END & cnv_start<=cnv_neurodev$END),]
-      
+
       if(nrow(cnv_neurodev.match)>0){
         cnv_neurodev.match.start=cnv_neurodev.match$START
         cnv_neurodev.match.end=cnv_neurodev.match$END
-        
+
         cnv.prop=(cnv_neurodev.match$END-cnv_start)/(cnv_neurodev.match.end-cnv_neurodev.match.start)
         cnv_neurodev.match=cbind(cnv_neurodev.match,cnv.prop)
-        
+
       }
-      ### CNV falls inside nd region 
+      ### CNV falls inside nd region
       else if(nrow(cnv_neurodev.match)==0){
-      
+
         cnv_neurodev.match=cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr & cnv_start>=cnv_neurodev$START & cnv_end<=cnv_neurodev$END),]
-        
+
         if(nrow(cnv_neurodev.match)>0){
           cnv_neurodev.match.start=cnv_neurodev.match$START
           cnv_neurodev.match.end=cnv_neurodev.match$END
-          
+
           cnv.prop=(cnv_end-cnv_start)/(cnv_neurodev.match.end-cnv_neurodev.match.start)
           cnv_neurodev.match=cbind(cnv_neurodev.match,cnv.prop)
         }}}}
-  
+
   if(nrow(cnv_neurodev.match)>0){
     cbind(CNV_Calls_HQ[x,],cnv_neurodev.match)
   }
-  
+
 }))))
 
 cnv_neuro_beta$TYPE <- do.call(rbind,strsplit(cnv_neuro_beta$TYPE,split="="))[,2]
@@ -342,16 +337,16 @@ cnv_neuro_beta_genes <- as.data.frame(do.call(rbind,lapply(1:nrow(cnv_neuro_beta
   cnv_chr=a[1,9]
   cnv_start=a[1,10]
   cnv_end=a[1,11]
-  
+
   geneloc.chr=geneloc[which(geneloc$V2==cnv_chr),]
-  
+
   ### CNV covers whole gene
   gene.whole=geneloc.chr[which(cnv_start<geneloc.chr$V3 & cnv_end>geneloc.chr$V4),]
   gene.start=geneloc.chr[which(cnv_start<geneloc.chr$V3 & cnv_end<geneloc.chr$V4 & cnv_end>geneloc.chr$V3),]
   gene.end=geneloc.chr[which(cnv_start>geneloc.chr$V3 & cnv_end>geneloc.chr$V4 & cnv_start<geneloc.chr$V4),]
   gene.mid=geneloc.chr[which(cnv_start>geneloc.chr$V3 & cnv_end<geneloc.chr$V4),]
-  
-  
+
+
   if(nrow(gene.whole)>0 | nrow(gene.start)>0 | nrow(gene.end)>0 | nrow(gene.mid)>0){
     a$GENES=paste(unique(c(gene.whole$V6,gene.start$V6,gene.end$V6,gene.mid$V6)),collapse="|")
     a
@@ -364,11 +359,11 @@ cnv_neuro_beta_genes <- as.data.frame(do.call(rbind,lapply(1:nrow(cnv_neuro_beta
 ##########################################################
 
 Checks<- CNV_Calls_HQ%>%
-  dplyr::filter(!ID %in% cnv_neuro_beta_genes$ID) # need to use dplyr:: here? 
+  dplyr::filter(!ID %in% cnv_neuro_beta_genes$ID) # need to use dplyr:: here?
 
 ### Check for duplicate IDs. It would be unusual for an individual to have two different ND CNVs
-### Most likely cause for dupliucates are having a smaller nested CNV within a larger one, where both are ND 
-### Loop over the IDs, check to see if the CNV coordinates are duplicates, and if so just report the largest CNV. 
+### Most likely cause for dupliucates are having a smaller nested CNV within a larger one, where both are ND
+### Loop over the IDs, check to see if the CNV coordinates are duplicates, and if so just report the largest CNV.
 
 #if(nrow(cnv_neuro_beta_genes[which(duplicated(cnv_neuro_beta_genes$ID)),])>0){
 
@@ -429,7 +424,7 @@ pafah_file <- exon_processing("pafah1b1")
 # }))))
 # nrx1.exon.coords$EXON=paste("NRXN1 Exon ",seq(1:nrow(nrx1.exon.coords)),sep="")
 # ###
-# 
+#
 ### YWHAE exon processing #17p
 YWHAE=read.table(file="./exon_files/exon.YWHAE",header=T,stringsAsFactors = F,fill = T)
 YWHAE.exon.start=unlist(strsplit(YWHAE$exonStarts,split = ","))
@@ -441,7 +436,7 @@ YWHAE.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(YWHAE.exon.
 }))))
 YWHAE.exon.coords$EXON=paste("YWHAE Exon ",seq(1:nrow(YWHAE.exon.coords)),sep="")
 ###
-# 
+#
 # ### PAFAH1B1 exon processing #17p
 # PAFAH1B1=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/exon.PAFAH1B1",header=T,stringsAsFactors = F,fill = T)
 # PAFAH1B1.exon.start=unlist(strsplit(PAFAH1B1$exonStarts,split = ","))
@@ -462,374 +457,374 @@ cnvs_unique <- unique(cnv_neuro_beta_genes$V1)
 cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x){
   #browser()
   #cnv_patho_criteria[1,12]
-  
-  
-  
+
+
+
   CNV.ND=cnv_neuro_beta_genes[which(cnv_neuro_beta_genes$V1==x),]
-  
+
   as.data.frame(do.call(rbind,lapply(1:nrow(CNV.ND),function(y){
-    CNV.ND.Line=CNV.ND[y,] 
-    
-    greater_than_1mbp <- CNV.ND.Line$SIZE > 1000000 
+    CNV.ND.Line=CNV.ND[y,]
+
+    greater_than_1mbp <- CNV.ND.Line$SIZE > 1000000
     greater_than_4mbp <- CNV.ND.Line$SIZE > 4000000
     size_greater_50 <- CNV.ND.Line$cnv.prop > 0.5
     size_greater_80 <- CNV.ND.Line$cnv.prop > 0.8
-    
+
     # 1q21.1	del/dup		 Size	>50%	of	critical	region
     if((x=="1q21.1 del" | x=="1q21.1 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
     # 1p36 del/dup		 Size	>50%	of	critical	region,	affecting	GABRD
     if((x=="1p36 del (GABRD)" | x=="1p36 dup (GABRD)") & length(grep("GABRD",CNV.ND.Line$GENES))>0 & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
     # TAR del/dup		 Size	>50%	of	critical	region
     if((x=="TAR del" | x=="TAR dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
     # NRXN1 del, must include complete deletion of at least one exon
     if((x=="NRXN1 del") & length(grep("NRXN1",CNV.ND.Line$GENES))>0){
-      
-      
+
+
       nrxn1.exon.count=as.data.frame(do.call(rbind,lapply(1:nrow(nrx1.exon.coords),function(z){
         CNV.ND.Line.Start=CNV.ND.Line[1,10]
         CNV.ND.Line.End=CNV.ND.Line[1,11]
-        
+
         exon.whole=nrx1.exon.coords[which(as.numeric(as.character(nrx1.exon.coords[z,1]))>CNV.ND.Line.Start & as.numeric(as.character(nrx1.exon.coords[z,2]))<CNV.ND.Line.End),]
-        
+
         if(nrow(exon.whole)>0){
           exon.whole
         }
-        
+
       })))
-      
+
       if(nrow(nrxn1.exon.count)>0){
-        CNV.ND.Line$CRITERIA_MET=1    
+        CNV.ND.Line$CRITERIA_MET=1
       }
     }
-    
+
     # 2q11.2	del/dup	Size	>50%	of	critical	region,	affecting	both LMAN2L and	ARID5A
     if((x=="2q11.2 del" | x=="2q11.2 dup") & length(grep("LMAN2L",CNV.ND.Line$GENES))>0 & length(grep("ARID5A",CNV.ND.Line$GENES))>0 & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    # 2q13	del/dup		 Size	>50%	of	critical	region		
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
+    # 2q13	del/dup		 Size	>50%	of	critical	region
     if((x=="2q13 del" | x=="2q13 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
     # 2q13	del/dup	(NPHP1)		 Size	>50%	of	critical	region,	affecting	NPHP1
     if((x=="2q13 del (NPHP1)" | x=="2q13 dup (NPHP1)") & length(grep("NPHP1",CNV.ND.Line$GENES))>0 & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    # 2q21.1	del/dup		 Size	>50%	of	critical	region		
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
+    # 2q21.1	del/dup		 Size	>50%	of	critical	region
     if((x=="2q21.1 del" | x=="2q21.1 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
     # 2q37	del	(HDAC4)		 Size	>50%	of	critical	region,	affecting	HDAC4
     if((x=="2q37 del (HDAC4)" | x=="2q37 dup (HDAC4)") & size_greater_50 & length(grep("HDAC4",CNV.ND.Line$GENES))>0){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    # 3q29	del/dup		 Size	>50%	of	critical	region		
-    if((x=="3q29	del" | x=="3q29	dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    # WolfâHirschhorn	del/dup		 Size	>50%	of	critical	region		
-    if((x=="WolfâHirschhor del" | x=="WolfâHirschhor dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    # Sotos	Syn/5q35	dup		 Size	>50%	of	critical	region		
-    if(x=="Sotos Syn/5q35 dup" & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    # Williams	Beuren	Syn	del/dup	Size	>50%	of	critical	region		
-    if((x=="Williams	Beuren Syn del" | x=="Williams Beuren Syn dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    # 8p23.1	del/dup		 At	least	1Mbp	of	critical	region		
-    if((x=="8p23.1 del" | x=="8p23.1 dup") & greater_than_1mbp){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
+    # 3q29	del/dup		 Size	>50%	of	critical	region
+    if((x=="3q29	del" | x=="3q29	dup") & size_greater_50){
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
+    # WolfâHirschhorn	del/dup		 Size	>50%	of	critical	region
+    if((x=="WolfâHirschhor del" | x=="WolfâHirschhor dup") & size_greater_50){
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
+    # Sotos	Syn/5q35	dup		 Size	>50%	of	critical	region
+    if(x=="Sotos Syn/5q35 dup" & size_greater_50){
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
+    # Williams	Beuren	Syn	del/dup	Size	>50%	of	critical	region
+    if((x=="Williams	Beuren Syn del" | x=="Williams Beuren Syn dup") & size_greater_50){
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
+    # 8p23.1	del/dup		 At	least	1Mbp	of	critical	region
+    if((x=="8p23.1 del" | x=="8p23.1 dup") & greater_than_1mbp){
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
     # 9q34	del/dup	(EHMT1)		 At	least	1Mbp	CNVs,	including	EHMT1
     if(x=="9q34 del (EHMT1)" & greater_than_1mbp & length(grep("EHMT1",CNV.ND.Line$GENES))>0){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 10q11.21q11.23	del/dup		 Size	>50%	of	critical	region		
+
+    # 10q11.21q11.23	del/dup		 Size	>50%	of	critical	region
     if((x=="10q11.21q11.23 del" | x=="10q11.21q11.23 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 10q23	del/dup		 At	least	1Mbp,	including	NRG3 and	GRID1
     if((x=="10q23 del" | x=="10q23 dup") & greater_than_1mbp & length(grep("NRG3",CNV.ND.Line$GENES))>0 & length(grep("GRID1",CNV.ND.Line$GENES))>0){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # PotockiâShaffer	Syn	del/11p11.2	dup (EXT2), size	>50%	of	critical	region,	including	EXT2
     if(x=="Potocki-Shaffer syndrome del (EXT2)" & size_greater_50 & length(grep("EXT2",CNV.ND.Line$GENES))){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 15q11.2	del/dup		 Size	>50%	of	critical	region		
+
+    # 15q11.2	del/dup		 Size	>50%	of	critical	region
     if((x=="15q11.2 del" | x=="15q11.2 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 15q11.2 del/dup BP1-BP2		 Size	>50%	of	critical	region		
+
+    # 15q11.2 del/dup BP1-BP2		 Size	>50%	of	critical	region
     if((x=="15q11.2 del BP1-BP2" | x=="15q11.2 dup BP1-BP2") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # PWS	del/dup		 Full	critical	region,	~4Mbp	
+
+    # PWS	del/dup		 Full	critical	region,	~4Mbp
     if((x=="(PWS/AS del" | x=="(PWS/AS dup") & greater_than_4mbp & CNV.ND.Line$cnv.prop>0.8){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 15q13.3 del BP4-BP5		 Size	>50%	of	critical	region
     if(x=="15q13.3 del BP4-BP5" & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 15q24	del/dup		 At	least	1Mbp	between	the	AâE	intervals	
+
+    # 15q24	del/dup		 At	least	1Mbp	between	the	AâE	intervals
     if((x=="15q24 del" | x=="15q24 dup") & greater_than_1mbp){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    
-    
-    # 15q25	del/dup		 At	least	1Mbp	between	the	AâD	intervals		
+
+
+
+    # 15q25	del/dup		 At	least	1Mbp	between	the	AâD	intervals
     if(x=="15q25 del" & greater_than_1mbp){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 16p13.11	del/dup		 Size	>50%	of	critical	region
     if((x=="16p13.11 del" | x=="16p13.11 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 16p12.1	del		 Size	>50%	of	critical	region
     if(x=="16p12.1 del" & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    
-    
-    # 16p11.2	distal	del/distal	dup		 Size	>50%	of	critical	region		
+
+
+
+    # 16p11.2	distal	del/distal	dup		 Size	>50%	of	critical	region
     if((x=="16p11.2 distal del" | x=="16p11.2 distal dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 16p11.2	del/dup		 Size	>50%	of	critical	region
     if((x=="16p11.2 del" | x=="16p11.2 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    
-    
+
+
+
     # 17p13.3	del/dup	(YWHAE)		 Exonic	deletions;	whole	gene	duplications
-    
+
     if((x=="17p13.3 del (YWHAE)" | x=="17p13.3	dup (YWHAE") & size_greater_50 & length(grep("YWHAE",CNV.ND.Line$GENES))>0){
-      
+
       YWHAE.exon.count=as.data.frame(do.call(rbind,lapply(1:nrow(YWHAE.exon.coords),function(z){
         CNV.ND.Line.Start=CNV.ND.Line[1,10]
         CNV.ND.Line.End=CNV.ND.Line[1,11]
-        
+
         exon.whole=YWHAE.exon.coords[which(as.numeric(as.character(YWHAE.exon.coords[z,1]))>CNV.ND.Line.Start & as.numeric(as.character(YWHAE.exon.coords[z,2]))<CNV.ND.Line.End),]
-        
+
         if(nrow(exon.whole)>0){
           exon.whole
         }
-        
+
       })))
-      
+
       if(nrow(YWHAE.exon.count)>0){
-        CNV.ND.Line$CRITERIA_MET=1    
+        CNV.ND.Line$CRITERIA_MET=1
       }
     }
-    
-    
+
+
     # 17p13.3	del/dup	(PAFAH1B1) Exonic	deletions;	whole	gene	duplications
     if((x=="17p13.3 del (PAFAH1B1)" | x=="17p13.3	dup (PAFAH1B1") & size_greater_50 & length(grep("PAFAH1B1",CNV.ND.Line$GENES))>0){
       PAFAH1B1.exon.count=as.data.frame(do.call(rbind,lapply(1:nrow(PAFAH1B1.exon.coords),function(z){
         CNV.ND.Line.Start=CNV.ND.Line[1,10]
         CNV.ND.Line.End=CNV.ND.Line[1,11]
-        
+
         exon.whole=PAFAH1B1.exon.coords[which(as.numeric(as.character(PAFAH1B1.exon.coords[z,1]))>CNV.ND.Line.Start & as.numeric(as.character(PAFAH1B1.exon.coords[z,2]))<CNV.ND.Line.End),]
-        
+
         if(nrow(exon.whole)>0){
           exon.whole
         }
-        
+
       })))
-      
+
       if(nrow(PAFAH1B1.exon.count)>0){
-        CNV.ND.Line$CRITERIA_MET=1    
+        CNV.ND.Line$CRITERIA_MET=1
       }
     }
     # 17q11.2	del/dup	(NF1)	>50%	of	critical	region,	affecting	NF1
     if((x=="17q11.2 del (NF1)" | x=="17q11.2 dup (NF1)") & size_greater_50 & length(grep("NF1",CNV.ND.Line$GENES))>0){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    
-    # SmithâMagenis/PotockiâLupski	Syndrome	Size	>50%	of	critical	region		
-    
+
+
+    # SmithâMagenis/PotockiâLupski	Syndrome	Size	>50%	of	critical	region
+
     if((x=="Smith-Magenis syndrome del" | x=="Potocki-Lupski syndrome dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 17q11.2	del/dup	(NF1)		 Size	>50%	of	critical	region,	affecting	NF1
     if((x=="17q11.2 del (NF1)" | x=="17q11.2 dup (NF1)") & size_greater_50 & length(grep("NF1",CNV.ND.Line$GENES))>0){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 17q12	del/dup		 Size	>50%	of	critical	region		
+
+    # 17q12	del/dup		 Size	>50%	of	critical	region
     if((x=="17q12 del" | x=="17q12 dup" | x=="Renal cysts and diabetes syndrome del") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 17q21.31	del/dup		 Size	>50%	of	critical	region		
+
+    # 17q21.31	del/dup		 Size	>50%	of	critical	region
     if((x=="17q21.31 del" | x=="17q21.31 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 17q23.1q23.2	del		 Size	>50%	of	critical	region		
+
+    # 17q23.1q23.2	del		 Size	>50%	of	critical	region
     if(x=="17q23.1q23.2 del" & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 17p12       del              Size   >50%    of      critical        region
     if(x=="17p12 del" & size_greater_50){
       CNV.ND.Line$CRITERIA_MET=1
     }
-    
-    # 22q11.2	del/dup		 Size	>50%	of	critical	region		
+
+    # 22q11.2	del/dup		 Size	>50%	of	critical	region
     if((x=="22q11.2 del" | x=="22q11.2 dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # 22q11.2	distal	del/dup		 Size	>50%	of	critical	region
     if((x=="22q11.2 distal del" | x=="22q11.2 distal dup") & size_greater_50){
-      CNV.ND.Line$CRITERIA_MET=1    
+      CNV.ND.Line$CRITERIA_MET=1
     }
-    
+
     # SHANK3 del/dup	 At	least	1Mbp	CNVs,	including	SHANK3
     if((x=="SHANK3 del" | x=="SHANK3 dup") & length(grep("SHANK3",CNV.ND.Line$GENES))>0 & greater_than_1mbp){
-      CNV.ND.Line$CRITERIA_MET=1    
-    } 
-    
-    
+      CNV.ND.Line$CRITERIA_MET=1
+    }
+
+
     CNV.ND.Line
-    
+
   })))
 })))
 
 patho.criteria.met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==1),]
 
-### Deal with smaller nested CNVs 
+### Deal with smaller nested CNVs
 
 patho.criteria.met.no.nested <- as.data.frame(do.call(rbind,lapply(unique(patho.criteria.met$ID),function(x){
-  
+
   ### Select row with individual and criteria met
-  
-  ### Selects individuals who have criteria =1 
-  
+
+  ### Selects individuals who have criteria =1
+
   a=patho.criteria.met[which(patho.criteria.met$ID==x),]
-  
-  
-  
+
+
+
   if(nrow(a)==1){
-    
+
     a
-    
+
   } else if(nrow(a)>1){
-    
-    
-    
+
+
+
     ### Check nested TAR / 1q21, remove TAR from the results row
-    
+
     if((length(grep("TAR",a$V1))+length(grep("1q21",a$V1)))==2){
-      
+
       b1=a[-grep("TAR",a$V1),]
-      
+
       b1
-      
+
     }
-    
-    
-    
-    ### Check nested 15q11.2 in PWS/AS 
-    
-    
-    
+
+
+
+    ### Check nested 15q11.2 in PWS/AS
+
+
+
     if((length(grep("15q",a$V1))+length(grep("PWS",a$V1)))==2){
-      
+
       b2=a[-grep("15q",a$V1),]
-      
+
       b2
-      
+
     }
-    
-    
-    
-    ### Check nested 16p11.2 distal within 
-    
-    
-    
+
+
+
+    ### Check nested 16p11.2 distal within
+
+
+
     if((length(grep("distal",a$V1))+length(grep("16p11.2 del",a$V1)))==2){
-      
+
       b3=a[-grep("distal",a$V1),]
-      
+
       b3
-      
+
     }
-    
-    
-    
+
+
+
     ###  A final statement to deal with what happens if there are still two separate records for an individual
-    
+
     ### This just prints all lines. Note this does not deal with multiple ND CNVs at the same locus.
-    
+
     if(exists("b1")==F & exists("b2")==F & exists("b3")==F ){
-      
+
       a
-      
+
     }  else if(exists("b1")==T){
-      
+
       b1
-      
+
     }
-    
+
     else if(exists("b2")==T){
-      
+
       b2
-      
-    } 
-    
+
+    }
+
     else if(exists("b3")==T){
-      
+
       b3
-      
-    } 
-    
+
+    }
+
   }
-  
+
 })))
 
 ###
 
-patho.criteria.met=patho.criteria.met.no.nested # Why? PR 
+patho.criteria.met=patho.criteria.met.no.nested # Why? PR
 patho.criteria.met=patho.criteria.met[order(as.numeric(as.character(patho.criteria.met[,9])),as.numeric(as.character(patho.criteria.met[,10]))),]
 cnv.patho=as.data.frame(table(patho.criteria.met$V1))
 cnv.patho=unique(merge(patho.criteria.met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
@@ -859,12 +854,12 @@ non_iPS_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
 invisible(lapply(unique(patho.criteria.met$ID),function(x){
   browser()
   patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
-  
+
   if(nrow(patho.id)==1){
-    
-    name <- 
-    
-    
+
+    name <-
+
+
     patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]*1.3)
     patho.cnv.upper.coords=as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]*1.3)
     patho.cnv_chr=as.numeric(as.character(patho.id[,9]))
@@ -873,15 +868,15 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     cnv.raw.params$GROUP=c("Probes outside called CNV")
     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
     cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
-    
-    
+
+
     baf.col=grep("Allele",names(cnv.raw.params))
     logr.col=grep("Log",names(cnv.raw.params))
-    
-    
+
+
     # This should work, but if it's completely broken other functions below
     base_position_figure <- function(type = "baf"){
-      
+
       if (type == "baf"){
         y_params = cnv.raw.params[,baf.col]
         y_title <- "B-Allele Frequency"
@@ -893,9 +888,9 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       else {
         stop("Unknown type. Use 'baf' or 'lrr'.")
       }
-      
-    
-      
+
+
+
       figure=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=y_params,color=as.factor(GROUP))) +
         geom_point(shape=1) +
         xlab("Base Position")+
@@ -906,24 +901,24 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
         geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
         ylim(c(0,1))+
         labs(color="CNV Probe Legend")
-      
+
       return (figure)
     }
-    
+
     baf <- base_position_figure("baf")
     lrr <- base_position_figure("lrr")
-    
-    
+
+
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-    
+
     png(paste("C:\\Users\\sapjeh\\OneDrive - Cardiff University\\Sleep Detectives\\Family Environment Analysis\\Genotyping\\Pipeline\\NeuroDevelopmentalPlots\\",x,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
-  } 
-  
+  }
+
   else if(nrow(patho.id)>1){
     lapply(1:nrow(patho.id),function(y){
-      
+
       patho.cnv.lower.coords=as.numeric(as.character(patho.id[y,10]))-(patho.id[y,3]*1.3)
       patho.cnv.upper.coords=as.numeric(as.character(patho.id[y,11]))+(patho.id[y,3]*1.3)
       patho.cnv_chr=as.numeric(as.character(patho.id[y,9]))
@@ -932,8 +927,8 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       cnv.raw.params$GROUP=c("Probes outside called CNV")
       cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[y,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[y,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
       cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
-      
-      
+
+
 
       # baf=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,baf.col],color=as.factor(GROUP))) +
       #   geom_point(shape=1) +
@@ -945,7 +940,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       #   geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
       #   ylim(c(0,1))+
       #   labs(color="CNV Probe Legend")
-      # 
+      #
       # lrr=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,logr.col],color=as.factor(GROUP))) +
       #   geom_point(shape=1) +
       #   xlab("Base Position")+
@@ -955,13 +950,13 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       #   geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
       #   geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
       #   labs(color="CNV Probe Legend")
-      
+
       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-      
+
       png(paste("C:\\Users\\sapjeh\\OneDrive - Cardiff University\\Sleep Detectives\\Family Environment Analysis\\Genotyping\\Pipeline\\NeuroDevelopmentalPlots\\",x,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
       dev.off()
-    })  
+    })
   }
-  
+
 }))
