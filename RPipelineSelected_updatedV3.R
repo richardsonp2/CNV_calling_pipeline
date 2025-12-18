@@ -396,7 +396,7 @@ gene_df <- data.frame(
 
 # Improve address detection here
 exon_processing <- function(gene){
-  browser()
+  #browser()
   gene_table <- read.table(file=gene_df$file_address[gene_df$process_name == gene], header=T, stringsAsFactors = F)
   gene_exon_start <- unlist(strsplit(gene_table$exonStarts,split = ","))
   gene_exon_end <- unlist(strsplit(gene_table$exonEnds,split = ","))
@@ -411,8 +411,8 @@ gene_exon_coords$EXON=paste(gene_df$write_name[gene_df$process_name == gene] ,se
 
 #### NRXN1 exon processing
 nrxn1_file <- exon_processing("nrxn1")
-ywhae_file <- exon_processing("ywhae")
-pafah_file <- exon_processing("pafah1b1")
+ywhae_file <- exon_processing("ywhae")#  Something is wrong with the function when processing ywhae. Not sure what but can just run manually below for now PR 
+pafah_file <- exon_processing("pafah1b1") # So strange, if I comment the line above out, pfah1b1 fails....
 
 # nrxn1=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/exon.NCBI.NRXN1",header=T,stringsAsFactors = F)
 # nrx1.exon.start=unlist(strsplit(nrxn1$exonStarts,split = ","))
@@ -834,7 +834,7 @@ cnv.patho$DATASET="NOV25"
 names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 
 CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
-# Need to automatically add an R output folder
+# TODO Need to automatically add an R output folder 
 write.table(CalledCNVS,
             file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.txt",
             col.names=T,
@@ -846,18 +846,20 @@ write.csv(CalledCNVS,
             col.names=T)
 
 ################################################################################################
-
+# call this something else, probably a legacy from cells? 
 non_iPS_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
 
 # A lot of this is copy paste. Make into a simple check#``
 
 invisible(lapply(unique(patho.criteria.met$ID),function(x){
   browser()
+  # This is taking the whole row of unique ID
+  
   patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
 
   if(nrow(patho.id)==1){
-
-    name <-
+    #browser()
+    #name <-
 
 
     patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]*1.3)
@@ -908,10 +910,10 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     baf <- base_position_figure("baf")
     lrr <- base_position_figure("lrr")
 
+    # TODO fix the name to something shorter
+    combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
 
-    grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-
-    png(paste("C:\\Users\\sapjeh\\OneDrive - Cardiff University\\Sleep Detectives\\Family Environment Analysis\\Genotyping\\Pipeline\\NeuroDevelopmentalPlots\\",x,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+    png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",combined_plot,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
   }
@@ -950,13 +952,14 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       #   geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
       #   geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
       #   labs(color="CNV Probe Legend")
-
-      grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-
-      png(paste("C:\\Users\\sapjeh\\OneDrive - Cardiff University\\Sleep Detectives\\Family Environment Analysis\\Genotyping\\Pipeline\\NeuroDevelopmentalPlots\\",x,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
-      grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-      dev.off()
+# 
+#       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
+# 
+#       png(paste("C:\\Users\\sapjeh\\OneDrive - Cardiff University\\Sleep Detectives\\Family Environment Analysis\\Genotyping\\Pipeline\\NeuroDevelopmentalPlots\\",x,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+#       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
+#       dev.off()
     })
   }
 
 }))
+
