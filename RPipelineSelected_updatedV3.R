@@ -12,7 +12,7 @@ library("limma")
 library("yaml")
 
 
-#setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -411,7 +411,7 @@ gene_exon_coords$EXON=paste(gene_df$write_name[gene_df$process_name == gene] ,se
 
 #### NRXN1 exon processing
 nrxn1_file <- exon_processing("nrxn1")
-ywhae_file <- exon_processing("ywhae")#  Something is wrong with the function when processing ywhae. Not sure what but can just run manually below for now PR 
+ywhae_file <- exon_processing("ywhae")#  Something is wrong with the function when processing ywhae. Not sure what but can just run manually below for now PR
 pafah_file <- exon_processing("pafah1b1") # So strange, if I comment the line above out, pfah1b1 fails....
 
 # nrxn1=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/exon.NCBI.NRXN1",header=T,stringsAsFactors = F)
@@ -830,11 +830,11 @@ cnv.patho=as.data.frame(table(patho.criteria.met$V1))
 cnv.patho=unique(merge(patho.criteria.met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
 
 
-cnv.patho$DATASET="NOV25"
+cnv.patho$DATASET="JAN26"
 names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 
 CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
-# TODO Need to automatically add an R output folder 
+# TODO Need to automatically add an R output folder PR
 write.table(CalledCNVS,
             file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.txt",
             col.names=T,
@@ -846,28 +846,35 @@ write.csv(CalledCNVS,
             col.names=T)
 
 ################################################################################################
-# call this something else, probably a legacy from cells? 
+# call this something else, probably a legacy from cells?
 non_iPS_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
 
 # A lot of this is copy paste. Make into a simple check#``
 
+generate_CNV_plots <- function(dataset){
+
+}
+
 invisible(lapply(unique(patho.criteria.met$ID),function(x){
-  browser()
+
   # This is taking the whole row of unique ID
-  
   patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
 
   if(nrow(patho.id)==1){
     #browser()
-    #name <-
+    IDname_long <- basename(patho.id$ID)
+
+    IDname <- sub(".*\\.", "", IDname_long)
 
 
-    patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]*1.3)
-    patho.cnv.upper.coords=as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]*1.3)
-    patho.cnv_chr=as.numeric(as.character(patho.id[,9]))
-    cnv.raw=as.data.frame(fread(input=x),header=T,sep="\t")# all need to be in same folder
-    cnv.raw.params=cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
-    cnv.raw.params$GROUP=c("Probes outside called CNV")
+    magic_number_1 <- 1.3 ## Ask what this means?
+
+    patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]* magic_number_1)
+    patho.cnv.upper.coords <- as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]* magic_number_1)
+    patho.cnv_chr <- as.numeric(as.character(patho.id[,9]))
+    cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# all need to be in same folder
+    cnv.raw.params <- cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
+    cnv.raw.params$GROUP <- c("Probes outside called CNV")
     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
     cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
 
@@ -897,7 +904,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
         geom_point(shape=1) +
         xlab("Base Position")+
         ylab(y_title)+
-        ggtitle(paste(x,patho.id$V1,sep=" "))+
+        ggtitle(paste(IDname, patho.id$V1, sep=" "))+
         geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
         geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
         geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
@@ -913,7 +920,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     # TODO fix the name to something shorter
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
 
-    png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",combined_plot,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+    png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
   }
@@ -930,34 +937,6 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[y,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[y,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
       cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
 
-
-
-      # baf=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,baf.col],color=as.factor(GROUP))) +
-      #   geom_point(shape=1) +
-      #   xlab("Base Position")+
-      #   ylab("B-Allele Frequency")+
-      #   ggtitle(paste(x,patho.id$V1,sep=" "))+
-      #   geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
-      #   geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
-      #   geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
-      #   ylim(c(0,1))+
-      #   labs(color="CNV Probe Legend")
-      #
-      # lrr=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=cnv.raw.params[,logr.col],color=as.factor(GROUP))) +
-      #   geom_point(shape=1) +
-      #   xlab("Base Position")+
-      #   ylab("Log R Ratio")+
-      #   ylim(c(-1,1))+
-      #   geom_hline(yintercept=0, linetype="dashed", color = "Black")+
-      #   geom_vline(xintercept=patho.id[y,14], linetype="dashed", color = "Green")+
-      #   geom_vline(xintercept=patho.id[y,15], linetype="dashed", color = "Green")+
-      #   labs(color="CNV Probe Legend")
-# 
-#       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-# 
-#       png(paste("C:\\Users\\sapjeh\\OneDrive - Cardiff University\\Sleep Detectives\\Family Environment Analysis\\Genotyping\\Pipeline\\NeuroDevelopmentalPlots\\",x,".",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
-#       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-#       dev.off()
     })
   }
 
