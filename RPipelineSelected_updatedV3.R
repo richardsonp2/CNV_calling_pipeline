@@ -209,7 +209,7 @@ grid.arrange(arrangeGrob(plot_1, plot_2,ncol=1),arrangeGrob(plot_3, plot_4,ncol=
 ###added by Jo H to combine datafiles
 # TODO make this dynamic for name from yaml file!!
 
-folder_path <- "./tmp_scratch/FullDataTable_reclustered/output/qc_cnvs/"
+folder_path <- "./tmp_scratch/FullData_test_JAN2026/output/qc_cnvs/"
 
 # Get a list of all file names in the folder (e.g., CSV files)
 file_list <- list.files(path = folder_path, pattern = "\\.goodcnv$", full.names = TRUE)
@@ -834,20 +834,25 @@ cnv.patho$DATASET="JAN26"
 names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 
 CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
-# TODO Need to automatically add an R output folder PR
+# TODO for now this should work, but need to add this into the YAML to make seamless.
+
+parent_address <- "./tmp_scratch/FullData_test_JAN2026/output/"
+subdir_routput <- "Routput"
+dir.create(file.path(parent_address, subdir_routput), showWarnings = FALSE)
+
 write.table(CalledCNVS,
-            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.txt",
+            file="./tmp_scratch/FullData_test_JAN2026/output/Routput/called_cnvs.txt",
             col.names=T,
             row.names=F,
             quote=F,
             sep="\t")
 write.csv(CalledCNVS,
-            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.csv",
+            file="./tmp_scratch/FullData_test_JAN2026/output/Routput/called_cnvs.csv",
             col.names=T)
 
 ################################################################################################
 # call this something else, probably a legacy from cells?
-non_iPS_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
+split_file_dir <- "./tmp_scratch/FullData_test_JAN2026/output/split_files/"
 
 # A lot of this is copy paste. Make into a simple check#``
 
@@ -898,8 +903,6 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
         stop("Unknown type. Use 'baf' or 'lrr'.")
       }
 
-
-
       figure=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=y_params,color=as.factor(GROUP))) +
         geom_point(shape=1) +
         xlab("Base Position")+
@@ -917,10 +920,9 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     baf <- base_position_figure("baf")
     lrr <- base_position_figure("lrr")
 
-    # TODO fix the name to something shorter
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
 
-    png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+    png(paste("./tmp_scratch/FullData_test_JAN2026/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
   }
@@ -931,7 +933,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       patho.cnv.lower.coords=as.numeric(as.character(patho.id[y,10]))-(patho.id[y,3]*1.3)
       patho.cnv.upper.coords=as.numeric(as.character(patho.id[y,11]))+(patho.id[y,3]*1.3)
       patho.cnv_chr=as.numeric(as.character(patho.id[y,9]))
-      cnv.raw=as.data.frame(fread(paste0(non_iPS_dir,x,sep=""),header=T,sep="\t"))
+      cnv.raw=as.data.frame(fread(paste0(split_file_dir,x,sep=""),header=T,sep="\t"))
       cnv.raw.params=cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
       cnv.raw.params$GROUP=c("Probes outside called CNV")
       cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[y,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[y,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
