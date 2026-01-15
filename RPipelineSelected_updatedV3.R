@@ -12,7 +12,7 @@ library("limma")
 library("yaml")
 
 
-setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+# setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -409,21 +409,21 @@ gene_exon_coords$EXON=paste(gene_df$write_name[gene_df$process_name == gene] ,se
 }
 
 
-#### NRXN1 exon processing
-nrxn1_file <- exon_processing("nrxn1")
-ywhae_file <- exon_processing("ywhae")#  Something is wrong with the function when processing ywhae. Not sure what but can just run manually below for now PR
-pafah_file <- exon_processing("pafah1b1") # So strange, if I comment the line above out, pfah1b1 fails....
+#### NRXN1 exon processing ### NO IDEA WHY THIS ISNT WORKING! TODO check this and get it working. THough not essential
+#nrxn1_file <- exon_processing("nrxn1")
+#ywhae_file <- exon_processing("ywhae")#  Something is wrong with the function when processing ywhae. Not sure what but can just run manually below for now PR
+#pafah_file <- exon_processing("pafah1b1") # So strange, if I comment the line above out, pfah1b1 fails....
 
-# nrxn1=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/exon.NCBI.NRXN1",header=T,stringsAsFactors = F)
-# nrx1.exon.start=unlist(strsplit(nrxn1$exonStarts,split = ","))
-# nrx1.exon.end=unlist(strsplit(nrxn1$exonEnds,split = ","))
-# nrx1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(nrx1.exon.start),function(x){
-#   nrx1.exon.start.loop=nrx1.exon.start[x]
-#   nrx1.exon.end.loop=nrx1.exon.end[x]
-#   cbind(nrx1.exon.start.loop,nrx1.exon.end.loop)
-# }))))
-# nrx1.exon.coords$EXON=paste("NRXN1 Exon ",seq(1:nrow(nrx1.exon.coords)),sep="")
-# ###
+nrxn1=read.table(file="./exon_files/exon.NCBI1.NRXN1",header=T,stringsAsFactors = F)
+nrx1.exon.start=unlist(strsplit(nrxn1$exonStarts,split = ","))
+nrx1.exon.end=unlist(strsplit(nrxn1$exonEnds,split = ","))
+nrx1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(nrx1.exon.start),function(x){
+  nrx1.exon.start.loop=nrx1.exon.start[x]
+  nrx1.exon.end.loop=nrx1.exon.end[x]
+  cbind(nrx1.exon.start.loop,nrx1.exon.end.loop)
+}))))
+nrx1.exon.coords$EXON=paste("NRXN1 Exon ",seq(1:nrow(nrx1.exon.coords)),sep="")
+###
 #
 ### YWHAE exon processing #17p
 YWHAE=read.table(file="./exon_files/exon.YWHAE",header=T,stringsAsFactors = F,fill = T)
@@ -437,17 +437,17 @@ YWHAE.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(YWHAE.exon.
 YWHAE.exon.coords$EXON=paste("YWHAE Exon ",seq(1:nrow(YWHAE.exon.coords)),sep="")
 ###
 #
-# ### PAFAH1B1 exon processing #17p
-# PAFAH1B1=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/exon.PAFAH1B1",header=T,stringsAsFactors = F,fill = T)
-# PAFAH1B1.exon.start=unlist(strsplit(PAFAH1B1$exonStarts,split = ","))
-# PAFAH1B1.exon.end=unlist(strsplit(PAFAH1B1$exonEnds,split = ","))
-# PAFAH1B1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(PAFAH1B1.exon.start),function(x){
-#   PAFAH1B1.exon.start.loop=PAFAH1B1.exon.start[x]
-#   PAFAH1B1.exon.end.loop=PAFAH1B1.exon.end[x]
-#   cbind(PAFAH1B1.exon.start.loop,PAFAH1B1.exon.end.loop)
-# }))))
-# PAFAH1B1.exon.coords$EXON=paste("PAFAH1B1 Exon ",seq(1:nrow(PAFAH1B1.exon.coords)),sep="")
-# ###
+### PAFAH1B1 exon processing #17p
+PAFAH1B1=read.table(file="./exon_files/exon.PAFAH1B1",header=T,stringsAsFactors = F,fill = T)
+PAFAH1B1.exon.start=unlist(strsplit(PAFAH1B1$exonStarts,split = ","))
+PAFAH1B1.exon.end=unlist(strsplit(PAFAH1B1$exonEnds,split = ","))
+PAFAH1B1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(PAFAH1B1.exon.start),function(x){
+  PAFAH1B1.exon.start.loop=PAFAH1B1.exon.start[x]
+  PAFAH1B1.exon.end.loop=PAFAH1B1.exon.end[x]
+  cbind(PAFAH1B1.exon.start.loop,PAFAH1B1.exon.end.loop)
+}))))
+PAFAH1B1.exon.coords$EXON=paste("PAFAH1B1 Exon ",seq(1:nrow(PAFAH1B1.exon.coords)),sep="")
+###
 
 cnv_neuro_beta_genes$CRITERIA_MET=0
 cnv_neuro_beta_genes$SIZE=as.numeric(cnv_neuro_beta_genes$SIZE)
@@ -854,8 +854,13 @@ write.csv(CalledCNVS,
 # call this something else, probably a legacy from cells?
 split_file_dir <- "./tmp_scratch/FullData_test_JAN2026/output/split_files/"
 
-# A lot of this is copy paste. Make into a simple check#``
+r_output_address <- "./tmp_scratch/FullData_test_JAN2026/output/Routput/"
+subdir_plots <- "plots"
+dir.create(file.path(r_output_address, subdir_plots), showWarnings = FALSE)
 
+
+# A lot of this is copy paste. Make into a simple check
+# TODO get this working, ideally would then add a seperate text file with all required information. Perhaps still the HTML file if needed.
 generate_CNV_plots <- function(dataset){
 
 }
