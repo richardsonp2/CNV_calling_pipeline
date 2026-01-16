@@ -152,7 +152,7 @@ log_message "Output directory: $OUTPUT_DIR"
 
 log_message "Step 1: Splitting input files"
 
-# Clean up any previous split files
+# Clean up any previous split files, we dont want a change in size etc to lead to new and old files mixing
 rm -f "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."*
 
 if ! kcolumn.pl \

@@ -11,8 +11,15 @@ library("data.table")
 library("limma")
 library("yaml")
 
+# The vast majority of this script is written by
+#- "Leon Hubbard"
+#- "Kimberley Kendall"
+#- "Elliott Rees"
+#- "George Kirov"
+# Changes to make directories more accessable and modifications by Jo Haddon
+# Yaml adaptations, figure updates Peter Richardson
 
-# setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -90,6 +97,8 @@ no_outliers_removed <- grid.arrange(arrangeGrob(waveform_plot,LRR_plot,ncol=1),a
 # TODO save this plot as a figure in a figs dir.
 
 ################################################################################
+
+
 
 LRR_SD_vd <- cnv_qual$LRR_SD >= LRR_SD_thres
 NCNV_vd <- cnv_qual$NumCNV >= NCNV_thres
@@ -209,7 +218,7 @@ grid.arrange(arrangeGrob(plot_1, plot_2,ncol=1),arrangeGrob(plot_3, plot_4,ncol=
 ###added by Jo H to combine datafiles
 # TODO make this dynamic for name from yaml file!!
 
-folder_path <- "./tmp_scratch/FullData_test_JAN2026/output/qc_cnvs/"
+folder_path <- "./tmp_scratch/FullDataTable_reclustered/output/qc_cnvs/"
 
 # Get a list of all file names in the folder (e.g., CSV files)
 file_list <- list.files(path = folder_path, pattern = "\\.goodcnv$", full.names = TRUE)
@@ -836,25 +845,25 @@ names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
 # TODO for now this should work, but need to add this into the YAML to make seamless.
 
-parent_address <- "./tmp_scratch/FullData_test_JAN2026/output/"
+parent_address <- "./tmp_scratch/FullDataTable_reclustered/output/"
 subdir_routput <- "Routput"
 dir.create(file.path(parent_address, subdir_routput), showWarnings = FALSE)
 
 write.table(CalledCNVS,
-            file="./tmp_scratch/FullData_test_JAN2026/output/Routput/called_cnvs.txt",
+            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.txt",
             col.names=T,
             row.names=F,
             quote=F,
             sep="\t")
 write.csv(CalledCNVS,
-            file="./tmp_scratch/FullData_test_JAN2026/output/Routput/called_cnvs.csv",
+            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.csv",
             col.names=T)
 
 ################################################################################################
 # call this something else, probably a legacy from cells?
-split_file_dir <- "./tmp_scratch/FullData_test_JAN2026/output/split_files/"
+split_file_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
 
-r_output_address <- "./tmp_scratch/FullData_test_JAN2026/output/Routput/"
+r_output_address <- "./tmp_scratch/FullDataTable_reclustered/output/Routput/"
 subdir_plots <- "plots"
 dir.create(file.path(r_output_address, subdir_plots), showWarnings = FALSE)
 
@@ -895,14 +904,18 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
 
     # This should work, but if it's completely broken other functions below
     base_position_figure <- function(type = "baf"){
-
+      #browser()
       if (type == "baf"){
         y_params = cnv.raw.params[,baf.col]
         y_title <- "B-Allele Frequency"
+        intercept_val <- 0.5
+        y_lims <- c(0,1)
       }
       else if (type == "lrr"){
         y_params = cnv.raw.params[,logr.col]
         y_title <- "Log R Ratio"
+        intercept_val <- 0
+        y_lims <- c(-1,1)
       }
       else {
         stop("Unknown type. Use 'baf' or 'lrr'.")
@@ -916,7 +929,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
         geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
         geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
         geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
-        ylim(c(0,1))+
+        ylim(y_lims)+
         labs(color="CNV Probe Legend")
 
       return (figure)
@@ -927,7 +940,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
 
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
 
-    png(paste("./tmp_scratch/FullData_test_JAN2026/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+    png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
   }
@@ -948,4 +961,18 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
   }
 
 }))
+
+
+
+
+
+# Lets have a go at generating the figure Jess suggests with each breakpoint shown
+# We have a LOT of ND-CNVS here so maybe we can make some seperate subsets to make it a bit more readable?
+
+## get out the breakpoints from file
+
+breakpoint_file <- read.csv("./penn_cnv_files/CNV_master_list.txt", header = FALSE)
+
+color_all_cnvs <- ggplot ()
+
 
