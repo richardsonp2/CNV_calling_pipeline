@@ -82,7 +82,7 @@ log_error() {
 
 PFB_FILE=$(validate_single_file "*.pfb" ".pfb")
 GCM_FILE=$(validate_single_file "*.gcmodel" ".gcmodel")
-MASTER_LIST=$(validate_single_file "master_list.txt" "master list")
+MASTER_LIST=$(validate_single_file "CNV_master_list.txt" "master list") # Is this even used here? 
 
 # ==============================================================================
 # SETUP DIRECTORY STRUCTURE

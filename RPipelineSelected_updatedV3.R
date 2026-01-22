@@ -463,6 +463,8 @@ cnv_neuro_beta_genes$SIZE=as.numeric(cnv_neuro_beta_genes$SIZE)
 
 cnvs_unique <- unique(cnv_neuro_beta_genes$V1)
 
+
+# This is assigning the criteria met column to 1 or 0 depending on a number of conditions using if else statements
 cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x){
   #browser()
   #cnv_patho_criteria[1,12]
@@ -845,7 +847,7 @@ names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
 # TODO for now this should work, but need to add this into the YAML to make seamless.
 
-parent_address <- "./tmp_scratch/FullDataTable_reclustered/output/"
+parent_address <- "./tmp_scratch/FullDataTable_reclustered/output/" # TODO change this
 subdir_routput <- "Routput"
 dir.create(file.path(parent_address, subdir_routput), showWarnings = FALSE)
 
