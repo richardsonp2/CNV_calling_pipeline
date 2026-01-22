@@ -82,7 +82,7 @@ log_error() {
 
 PFB_FILE=$(validate_single_file "*.pfb" ".pfb")
 GCM_FILE=$(validate_single_file "*.gcmodel" ".gcmodel")
-MASTER_LIST=$(validate_single_file "master_list.txt" "master list")
+MASTER_LIST=$(validate_single_file "CNV_master_list.txt" "master list") # Is this even used here? 
 
 # ==============================================================================
 # SETUP DIRECTORY STRUCTURE
@@ -152,7 +152,7 @@ log_message "Output directory: $OUTPUT_DIR"
 
 log_message "Step 1: Splitting input files"
 
-# Clean up any previous split files
+# Clean up any previous split files, we dont want a change in size etc to lead to new and old files mixing
 rm -f "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."*
 
 if ! kcolumn.pl \

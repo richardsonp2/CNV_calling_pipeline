@@ -11,6 +11,13 @@ library("data.table")
 library("limma")
 library("yaml")
 
+# The vast majority of this script is written by
+#- "Leon Hubbard"
+#- "Kimberley Kendall"
+#- "Elliott Rees"
+#- "George Kirov"
+# Changes to make directories more accessable and modifications by Jo Haddon
+# Yaml adaptations, figure updates Peter Richardson
 
 setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
@@ -90,6 +97,8 @@ no_outliers_removed <- grid.arrange(arrangeGrob(waveform_plot,LRR_plot,ncol=1),a
 # TODO save this plot as a figure in a figs dir.
 
 ################################################################################
+
+
 
 LRR_SD_vd <- cnv_qual$LRR_SD >= LRR_SD_thres
 NCNV_vd <- cnv_qual$NumCNV >= NCNV_thres
@@ -409,21 +418,21 @@ gene_exon_coords$EXON=paste(gene_df$write_name[gene_df$process_name == gene] ,se
 }
 
 
-#### NRXN1 exon processing
-nrxn1_file <- exon_processing("nrxn1")
-ywhae_file <- exon_processing("ywhae")#  Something is wrong with the function when processing ywhae. Not sure what but can just run manually below for now PR
-pafah_file <- exon_processing("pafah1b1") # So strange, if I comment the line above out, pfah1b1 fails....
+#### NRXN1 exon processing ### NO IDEA WHY THIS ISNT WORKING! TODO check this and get it working. THough not essential
+#nrxn1_file <- exon_processing("nrxn1")
+#ywhae_file <- exon_processing("ywhae")#  Something is wrong with the function when processing ywhae. Not sure what but can just run manually below for now PR
+#pafah_file <- exon_processing("pafah1b1") # So strange, if I comment the line above out, pfah1b1 fails....
 
-# nrxn1=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/exon.NCBI.NRXN1",header=T,stringsAsFactors = F)
-# nrx1.exon.start=unlist(strsplit(nrxn1$exonStarts,split = ","))
-# nrx1.exon.end=unlist(strsplit(nrxn1$exonEnds,split = ","))
-# nrx1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(nrx1.exon.start),function(x){
-#   nrx1.exon.start.loop=nrx1.exon.start[x]
-#   nrx1.exon.end.loop=nrx1.exon.end[x]
-#   cbind(nrx1.exon.start.loop,nrx1.exon.end.loop)
-# }))))
-# nrx1.exon.coords$EXON=paste("NRXN1 Exon ",seq(1:nrow(nrx1.exon.coords)),sep="")
-# ###
+nrxn1=read.table(file="./exon_files/exon.NCBI1.NRXN1",header=T,stringsAsFactors = F)
+nrx1.exon.start=unlist(strsplit(nrxn1$exonStarts,split = ","))
+nrx1.exon.end=unlist(strsplit(nrxn1$exonEnds,split = ","))
+nrx1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(nrx1.exon.start),function(x){
+  nrx1.exon.start.loop=nrx1.exon.start[x]
+  nrx1.exon.end.loop=nrx1.exon.end[x]
+  cbind(nrx1.exon.start.loop,nrx1.exon.end.loop)
+}))))
+nrx1.exon.coords$EXON=paste("NRXN1 Exon ",seq(1:nrow(nrx1.exon.coords)),sep="")
+###
 #
 ### YWHAE exon processing #17p
 YWHAE=read.table(file="./exon_files/exon.YWHAE",header=T,stringsAsFactors = F,fill = T)
@@ -437,23 +446,25 @@ YWHAE.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(YWHAE.exon.
 YWHAE.exon.coords$EXON=paste("YWHAE Exon ",seq(1:nrow(YWHAE.exon.coords)),sep="")
 ###
 #
-# ### PAFAH1B1 exon processing #17p
-# PAFAH1B1=read.table(file="C:/Users/sapjeh/OneDrive - Cardiff University/Sleep Detectives/Family Environment Analysis/Genotyping/Pipeline/exon.PAFAH1B1",header=T,stringsAsFactors = F,fill = T)
-# PAFAH1B1.exon.start=unlist(strsplit(PAFAH1B1$exonStarts,split = ","))
-# PAFAH1B1.exon.end=unlist(strsplit(PAFAH1B1$exonEnds,split = ","))
-# PAFAH1B1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(PAFAH1B1.exon.start),function(x){
-#   PAFAH1B1.exon.start.loop=PAFAH1B1.exon.start[x]
-#   PAFAH1B1.exon.end.loop=PAFAH1B1.exon.end[x]
-#   cbind(PAFAH1B1.exon.start.loop,PAFAH1B1.exon.end.loop)
-# }))))
-# PAFAH1B1.exon.coords$EXON=paste("PAFAH1B1 Exon ",seq(1:nrow(PAFAH1B1.exon.coords)),sep="")
-# ###
+### PAFAH1B1 exon processing #17p
+PAFAH1B1=read.table(file="./exon_files/exon.PAFAH1B1",header=T,stringsAsFactors = F,fill = T)
+PAFAH1B1.exon.start=unlist(strsplit(PAFAH1B1$exonStarts,split = ","))
+PAFAH1B1.exon.end=unlist(strsplit(PAFAH1B1$exonEnds,split = ","))
+PAFAH1B1.exon.coords=unique(as.data.frame(do.call(rbind,lapply(1:length(PAFAH1B1.exon.start),function(x){
+  PAFAH1B1.exon.start.loop=PAFAH1B1.exon.start[x]
+  PAFAH1B1.exon.end.loop=PAFAH1B1.exon.end[x]
+  cbind(PAFAH1B1.exon.start.loop,PAFAH1B1.exon.end.loop)
+}))))
+PAFAH1B1.exon.coords$EXON=paste("PAFAH1B1 Exon ",seq(1:nrow(PAFAH1B1.exon.coords)),sep="")
+###
 
 cnv_neuro_beta_genes$CRITERIA_MET=0
 cnv_neuro_beta_genes$SIZE=as.numeric(cnv_neuro_beta_genes$SIZE)
 
 cnvs_unique <- unique(cnv_neuro_beta_genes$V1)
 
+
+# This is assigning the criteria met column to 1 or 0 depending on a number of conditions using if else statements
 cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x){
   #browser()
   #cnv_patho_criteria[1,12]
@@ -834,7 +845,12 @@ cnv.patho$DATASET="JAN26"
 names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 
 CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
-# TODO Need to automatically add an R output folder PR
+# TODO for now this should work, but need to add this into the YAML to make seamless.
+
+parent_address <- "./tmp_scratch/FullDataTable_reclustered/output/" # TODO change this
+subdir_routput <- "Routput"
+dir.create(file.path(parent_address, subdir_routput), showWarnings = FALSE)
+
 write.table(CalledCNVS,
             file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.txt",
             col.names=T,
@@ -847,10 +863,15 @@ write.csv(CalledCNVS,
 
 ################################################################################################
 # call this something else, probably a legacy from cells?
-non_iPS_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
+split_file_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
 
-# A lot of this is copy paste. Make into a simple check#``
+r_output_address <- "./tmp_scratch/FullDataTable_reclustered/output/Routput/"
+subdir_plots <- "plots"
+dir.create(file.path(r_output_address, subdir_plots), showWarnings = FALSE)
 
+
+# A lot of this is copy paste. Make into a simple check
+# TODO get this working, ideally would then add a seperate text file with all required information. Perhaps still the HTML file if needed.
 generate_CNV_plots <- function(dataset){
 
 }
@@ -885,20 +906,22 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
 
     # This should work, but if it's completely broken other functions below
     base_position_figure <- function(type = "baf"){
-
+      #browser()
       if (type == "baf"){
         y_params = cnv.raw.params[,baf.col]
         y_title <- "B-Allele Frequency"
+        intercept_val <- 0.5
+        y_lims <- c(0,1)
       }
       else if (type == "lrr"){
         y_params = cnv.raw.params[,logr.col]
         y_title <- "Log R Ratio"
+        intercept_val <- 0
+        y_lims <- c(-1,1)
       }
       else {
         stop("Unknown type. Use 'baf' or 'lrr'.")
       }
-
-
 
       figure=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=y_params,color=as.factor(GROUP))) +
         geom_point(shape=1) +
@@ -908,7 +931,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
         geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
         geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
         geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
-        ylim(c(0,1))+
+        ylim(y_lims)+
         labs(color="CNV Probe Legend")
 
       return (figure)
@@ -917,7 +940,6 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     baf <- base_position_figure("baf")
     lrr <- base_position_figure("lrr")
 
-    # TODO fix the name to something shorter
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
 
     png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
@@ -931,7 +953,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
       patho.cnv.lower.coords=as.numeric(as.character(patho.id[y,10]))-(patho.id[y,3]*1.3)
       patho.cnv.upper.coords=as.numeric(as.character(patho.id[y,11]))+(patho.id[y,3]*1.3)
       patho.cnv_chr=as.numeric(as.character(patho.id[y,9]))
-      cnv.raw=as.data.frame(fread(paste0(non_iPS_dir,x,sep=""),header=T,sep="\t"))
+      cnv.raw=as.data.frame(fread(paste0(split_file_dir,x,sep=""),header=T,sep="\t"))
       cnv.raw.params=cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
       cnv.raw.params$GROUP=c("Probes outside called CNV")
       cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[y,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[y,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
@@ -941,4 +963,18 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
   }
 
 }))
+
+
+
+
+
+# Lets have a go at generating the figure Jess suggests with each breakpoint shown
+# We have a LOT of ND-CNVS here so maybe we can make some seperate subsets to make it a bit more readable?
+
+## get out the breakpoints from file
+
+breakpoint_file <- read.csv("./penn_cnv_files/CNV_master_list.txt", header = FALSE)
+
+color_all_cnvs <- ggplot ()
+
 
