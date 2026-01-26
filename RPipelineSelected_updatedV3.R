@@ -28,11 +28,16 @@ LRR_SD_thres=config$thresholds[[1]]
 NCNV_thres=config$thresholds[[2]]
 WF_thres=config$thresholds[[3]] #Penn CNV suggest 0.04 might be a reasonable cutoff
 
+
 # from Jacquemont paper log R ratio-standard deviation <0.35; B allele frequency-standard deviation <0.08; |waviness factor| <0.05, and CNVs <50 observations per array.
 # Need to name for either HPC or local?
 prefix <- config$thresholds$sample_prefix
 cnv_qc_sum <- paste0(prefix, ".qcsum")
 cnv_qc_include <- paste0(prefix, ".qcpass")
+
+# Need to update this to make it adjust accordingly
+folder_path <- paste0("./tmp_scratch/", prefix, "/output/qc_cnvs/")
+
 
 cnv_kk_file <- "./penn_cnv_files/CNVS.KK.2019.Sorted.txt"
 
@@ -218,7 +223,7 @@ grid.arrange(arrangeGrob(plot_1, plot_2,ncol=1),arrangeGrob(plot_3, plot_4,ncol=
 ###added by Jo H to combine datafiles
 # TODO make this dynamic for name from yaml file!!
 
-folder_path <- "./tmp_scratch/FullDataTable_reclustered/output/qc_cnvs/"
+
 
 # Get a list of all file names in the folder (e.g., CSV files)
 file_list <- list.files(path = folder_path, pattern = "\\.goodcnv$", full.names = TRUE)
@@ -847,25 +852,26 @@ names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
 # TODO for now this should work, but need to add this into the YAML to make seamless.
 
-parent_address <- "./tmp_scratch/FullDataTable_reclustered/output/" # TODO change this
+parent_address <- paste0("./tmp_scratch/", prefix, "/output/") # TODO change this
 subdir_routput <- "Routput"
 dir.create(file.path(parent_address, subdir_routput), showWarnings = FALSE)
 
+
+
 write.table(CalledCNVS,
-            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.txt",
+            file = paste0("./tmp_scratch/", prefix, "/output/Routput/called_cnvs.txt"),
             col.names=T,
             row.names=F,
             quote=F,
             sep="\t")
 write.csv(CalledCNVS,
-            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.csv",
+            file = paste0("./tmp_scratch/", prefix, "/output/Routput/called_cnvs.csv"),
             col.names=T)
 
 ################################################################################################
-# call this something else, probably a legacy from cells?
-split_file_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
+split_file_dir <- paste0("./tmp_scratch/", prefix, "/output/split_files/")
 
-r_output_address <- "./tmp_scratch/FullDataTable_reclustered/output/Routput/"
+r_output_address <- paste0("./tmp_scratch/", prefix, "/output/Routput/")
 subdir_plots <- "plots"
 dir.create(file.path(r_output_address, subdir_plots), showWarnings = FALSE)
 
@@ -942,7 +948,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
 
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
 
-    png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+    png(paste0("./tmp_scratch/", prefix, "/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
   }
