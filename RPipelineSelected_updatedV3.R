@@ -19,7 +19,7 @@ library("yaml")
 # Changes to make directories more accessable and modifications by Jo Haddon
 # Yaml adaptations, figure updates Peter Richardson
 
-setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -883,7 +883,7 @@ generate_CNV_plots <- function(dataset){
 }
 
 invisible(lapply(unique(patho.criteria.met$ID),function(x){
-
+  browser()
   # This is taking the whole row of unique ID
   patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
 
