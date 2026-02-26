@@ -276,7 +276,6 @@ cnv_neurodev <- cnv_neurodev[,c(1,4:7)]
 ##################################################################################
 
 cnv_neuro_beta <- unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV_Calls_HQ),function(x){
-#cnv_neuro_beta=unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV.Calls.QCFail),function(x){
   cnv_chr <- CNV_Calls_HQ[x,9]
   cnv_start <- CNV_Calls_HQ[x,10]
   cnv_end <- CNV_Calls_HQ[x,11]
@@ -471,7 +470,7 @@ cnvs_unique <- unique(cnv_neuro_beta_genes$V1)
 
 # This is assigning the criteria met column to 1 or 0 depending on a number of conditions using if else statements
 cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x){
-  #browser()
+  browser()
   #cnv_patho_criteria[1,12]
 
 
@@ -748,95 +747,115 @@ cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x)
 
 patho.criteria.met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==1),]
 
-### Deal with smaller nested CNVs
-
-patho.criteria.met.no.nested <- as.data.frame(do.call(rbind,lapply(unique(patho.criteria.met$ID),function(x){
-
-  ### Select row with individual and criteria met
-
-  ### Selects individuals who have criteria =1
-
-  a=patho.criteria.met[which(patho.criteria.met$ID==x),]
-
-
-
-  if(nrow(a)==1){
-
-    a
-
-  } else if(nrow(a)>1){
-
-
-
-    ### Check nested TAR / 1q21, remove TAR from the results row
-
-    if((length(grep("TAR",a$V1))+length(grep("1q21",a$V1)))==2){
-
-      b1=a[-grep("TAR",a$V1),]
-
-      b1
-
-    }
-
-
-
-    ### Check nested 15q11.2 in PWS/AS
-
-
-
-    if((length(grep("15q",a$V1))+length(grep("PWS",a$V1)))==2){
-
-      b2=a[-grep("15q",a$V1),]
-
-      b2
-
-    }
-
-
-
-    ### Check nested 16p11.2 distal within
-
-
-
-    if((length(grep("distal",a$V1))+length(grep("16p11.2 del",a$V1)))==2){
-
-      b3=a[-grep("distal",a$V1),]
-
-      b3
-
-    }
-
-
-
-    ###  A final statement to deal with what happens if there are still two separate records for an individual
-
-    ### This just prints all lines. Note this does not deal with multiple ND CNVs at the same locus.
-
-    if(exists("b1")==F & exists("b2")==F & exists("b3")==F ){
-
-      a
-
-    }  else if(exists("b1")==T){
-
-      b1
-
-    }
-
-    else if(exists("b2")==T){
-
-      b2
-
-    }
-
-    else if(exists("b3")==T){
-
-      b3
-
-    }
-
+select_non_nested_cnvs <- function(x, dataset){
+  
+  browser()
+  
+  # Select rows for this individual
+  a <- dataset[dataset$ID == x, ]
+  
+  #Single row, nothing to filter
+  if (nrow(a) == 1){
+    return(a)
   }
+  
+  # Multiple rows, initialise empty outputs 
+  b1 <- b2 <- b3 <- NULL
+  
+  # Rule1 : TAR nested in 1q21
+  if ((length(grep("TAR", a$V1)) + length(grep("1q21", a$V1))) == 2) {
+    b1 <- a[-grep("TAR", a$V1), ]
+  }
+  
+  # Rule2 : 15q11.2 nested in PWS/AS
+  if ((length(grep("15q", a$V1)) + length(grep("PWS", a$V1))) == 2) {
+    b2 <- a[-grep("15q", a$V1), ]
+  }
+  
+  # Rule3 : 16p11.2 nested 
+  if ((length(grep("distal", a$V1)) + length(grep("16p11.2 del", a$V1))) == 2) {
+    b3 <- a[-grep("distal", a$V1), ]
+  }
+  
+  # Final fallback 
+  
+  if (!is.null(b1)) return(b1)
+  if (!is.null(b2)) return(b2)
+  if (!is.null(b3)) return(b3)
+  
+  # Nothing matched → return all rows
+  return(a)
+}
 
-})))
+
+
+patho.criteria.met.no.nested <- as.data.frame(
+  do.call(
+    rbind,
+    lapply(
+      unique(patho.criteria.met$ID),
+      select_non_nested_cnvs,
+      dataset = patho.criteria.met
+    )
+  )
+)
+
+### Deal with smaller nested CNVs
+# 
+# patho.criteria.met.no.nested <- as.data.frame(do.call(rbind,lapply(unique(patho.criteria.met$ID),function(x){
+#   browser()
+#   ### Select row with individual and criteria met
+#   ### Selects individuals who have criteria =1
+# 
+#   a=patho.criteria.met[which(patho.criteria.met$ID==x),]
+#   if(nrow(a)==1){
+#     a
+#   } else if(nrow(a)>1){
+# 
+#     ### Check nested TAR / 1q21, remove TAR from the results row
+#     if((length(grep("TAR",a$V1))+length(grep("1q21",a$V1)))==2){
+#       b1=a[-grep("TAR",a$V1),]
+#       b1
+#     }
+# 
+# 
+# 
+#     ### Check nested 15q11.2 in PWS/AS
+#     if((length(grep("15q",a$V1))+length(grep("PWS",a$V1)))==2){
+#       b2=a[-grep("15q",a$V1),]
+#       b2
+#     }
+# 
+# 
+# 
+#     ### Check nested 16p11.2 distal within
+# 
+# 
+# 
+#     if((length(grep("distal",a$V1))+length(grep("16p11.2 del",a$V1)))==2){
+#       b3=a[-grep("distal",a$V1),]
+#       b3
+#       }
+# 
+# 
+# 
+#     ###  A final statement to deal with what happens if there are still two separate records for an individual
+#     ### This just prints all lines. Note this does not deal with multiple ND CNVs at the same locus.
+#     if(exists("b1")==F & exists("b2")==F & exists("b3")==F ){
+#       a
+#     }  else if(exists("b1")==T){
+#       b1
+#     }
+# 
+#     else if(exists("b2")==T){
+#       b2
+#     }
+# 
+#     else if(exists("b3")==T){
+#       b3
+#     }
+#   }
+# })))
 
 ###
 
@@ -883,7 +902,7 @@ generate_CNV_plots <- function(dataset){
 }
 
 invisible(lapply(unique(patho.criteria.met$ID),function(x){
-  browser()
+  #browser()
   # This is taking the whole row of unique ID
   patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
 
@@ -899,7 +918,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]* magic_number_1)
     patho.cnv.upper.coords <- as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]* magic_number_1)
     patho.cnv_chr <- as.numeric(as.character(patho.id[,9]))
-    cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# all need to be in same folder
+    cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# Reads the filename into fread.  
     cnv.raw.params <- cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
     cnv.raw.params$GROUP <- c("Probes outside called CNV")
     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
