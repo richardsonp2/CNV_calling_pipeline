@@ -19,7 +19,7 @@ library("yaml")
 # Changes to make directories more accessable and modifications by Jo Haddon
 # Yaml adaptations, figure updates Peter Richardson
 
-setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+# setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -63,12 +63,23 @@ cnv_include <- read.table(
   header = TRUE
 )
 
+# cnv_qual=read.table("~/CNV_data/CNV_repo/tmp_scratch/January2026_updated_data_/output/qc_cnvs/January2026_updated_data.qcsum", sep="", header =T)
+# cnv_include=read.table("~/CNV_data/CNV_repo/tmp_scratch/January2026_updated_data_/output/qc_cnvs/January2026_updated_data.qcpass", sep="", header =T)
+
+
 ################################################################################
 ### We get a list of indiviuals who have failed and passed QC based on our predefined parameters
 exclude.individuals <- cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >= WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
 exclude.individuals$GROUP="QC Fail"
 include.individuals <- cnv_qual[-which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
 include.individuals$GROUP="QC Pass"
+
+# exclude.individuals=cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
+# exclude.individuals$GROUP="QC Fail"
+# include.individuals=cnv_qual[-which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
+# include.individuals$GROUP="QC Pass"
+# cnv_qual=rbind(exclude.individuals,include.individuals)
+
 
 cnv_qual <- rbind(exclude.individuals,include.individuals)
 ################################################################################
@@ -470,7 +481,7 @@ cnvs_unique <- unique(cnv_neuro_beta_genes$V1)
 
 # This is assigning the criteria met column to 1 or 0 depending on a number of conditions using if else statements
 cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x){
-  browser()
+  # browser()
   #cnv_patho_criteria[1,12]
 
 
@@ -749,7 +760,7 @@ patho.criteria.met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==
 
 select_non_nested_cnvs <- function(x, dataset){
   
-  browser()
+  #browser()
   
   # Select rows for this individual
   a <- dataset[dataset$ID == x, ]
@@ -902,12 +913,11 @@ generate_CNV_plots <- function(dataset){
 }
 
 invisible(lapply(unique(patho.criteria.met$ID),function(x){
-  #browser()
+  browser()
   # This is taking the whole row of unique ID
   patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
 
   if(nrow(patho.id)==1){
-    #browser()
     IDname_long <- basename(patho.id$ID)
 
     IDname <- sub(".*\\.", "", IDname_long)
@@ -918,7 +928,12 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]* magic_number_1)
     patho.cnv.upper.coords <- as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]* magic_number_1)
     patho.cnv_chr <- as.numeric(as.character(patho.id[,9]))
-    cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# Reads the filename into fread.  
+    
+    
+    # cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# Reads the filename into fread.  
+    cnv.raw <- as.data.frame(fread(input=paste0(parent_address, "/split_files/", x)),header=T,sep="\t")# Reads the filename into fread.  
+    
+    
     cnv.raw.params <- cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
     cnv.raw.params$GROUP <- c("Probes outside called CNV")
     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")

@@ -155,14 +155,17 @@ log_message "Step 1: Splitting input files"
 # Clean up any previous split files, we dont want a change in size etc to lead to new and old files mixing
 rm -f "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."*
 
-kcolumn.pl \
-  "$INPUT_FILE" \
-  split 3 \
-  -heading 3 \
-  -name_by_header \
-  -tab \
-  -output "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}"
-
+if ! kcolumn.pl \
+    "$INPUT_FILE" \
+    split 3 \
+    -heading 3 \
+    -name_by_header \
+    -tab \
+    -output "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}"; then 
+    #-output "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}"; then 
+    log_error "File splitting failed"
+    exit 1 
+fi
 
 log_message "File splitting complete"
 
@@ -192,7 +195,8 @@ if ! detect_cnv.pl \
     -pfb "$PFB_FILE" \
     -gcmodel "$GCM_FILE" \
     -log "$PENNCNV_LOG" \
-    "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
+    # "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
+    * \
     -output "$RAW_CNV_OUT" \
     >>"$PENNCNV_LOG" 2>&1; then
     log_error "Raw CNV detection failed"
