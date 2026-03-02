@@ -756,7 +756,7 @@ cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x)
   })))
 })))
 
-patho.criteria.met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==1),]
+patho_criteria_met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==1),]
 
 select_non_nested_cnvs <- function(x, dataset){
   
@@ -800,86 +800,28 @@ select_non_nested_cnvs <- function(x, dataset){
 
 
 
-patho.criteria.met.no.nested <- as.data.frame(
+patho_criteria_met.no.nested <- as.data.frame(
   do.call(
     rbind,
     lapply(
-      unique(patho.criteria.met$ID),
+      unique(patho_criteria_met$ID),
       select_non_nested_cnvs,
-      dataset = patho.criteria.met
+      dataset = patho_criteria_met
     )
   )
 )
 
-### Deal with smaller nested CNVs
-# 
-# patho.criteria.met.no.nested <- as.data.frame(do.call(rbind,lapply(unique(patho.criteria.met$ID),function(x){
-#   browser()
-#   ### Select row with individual and criteria met
-#   ### Selects individuals who have criteria =1
-# 
-#   a=patho.criteria.met[which(patho.criteria.met$ID==x),]
-#   if(nrow(a)==1){
-#     a
-#   } else if(nrow(a)>1){
-# 
-#     ### Check nested TAR / 1q21, remove TAR from the results row
-#     if((length(grep("TAR",a$V1))+length(grep("1q21",a$V1)))==2){
-#       b1=a[-grep("TAR",a$V1),]
-#       b1
-#     }
-# 
-# 
-# 
-#     ### Check nested 15q11.2 in PWS/AS
-#     if((length(grep("15q",a$V1))+length(grep("PWS",a$V1)))==2){
-#       b2=a[-grep("15q",a$V1),]
-#       b2
-#     }
-# 
-# 
-# 
-#     ### Check nested 16p11.2 distal within
-# 
-# 
-# 
-#     if((length(grep("distal",a$V1))+length(grep("16p11.2 del",a$V1)))==2){
-#       b3=a[-grep("distal",a$V1),]
-#       b3
-#       }
-# 
-# 
-# 
-#     ###  A final statement to deal with what happens if there are still two separate records for an individual
-#     ### This just prints all lines. Note this does not deal with multiple ND CNVs at the same locus.
-#     if(exists("b1")==F & exists("b2")==F & exists("b3")==F ){
-#       a
-#     }  else if(exists("b1")==T){
-#       b1
-#     }
-# 
-#     else if(exists("b2")==T){
-#       b2
-#     }
-# 
-#     else if(exists("b3")==T){
-#       b3
-#     }
-#   }
-# })))
 
-###
-
-patho.criteria.met=patho.criteria.met.no.nested # Why? PR
-patho.criteria.met=patho.criteria.met[order(as.numeric(as.character(patho.criteria.met[,9])),as.numeric(as.character(patho.criteria.met[,10]))),]
-cnv.patho=as.data.frame(table(patho.criteria.met$V1))
-cnv.patho=unique(merge(patho.criteria.met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
+patho_criteria_met = patho_criteria_met.no.nested # Why? PR
+patho_criteria_met = patho_criteria_met[order(as.numeric(as.character(patho_criteria_met[,9])),as.numeric(as.character(patho_criteria_met[,10]))),]
+cnv.patho=as.data.frame(table(patho_criteria_met$V1))
+cnv.patho=unique(merge(patho_criteria_met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
 
 
 cnv.patho$DATASET="JAN26"
 names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 
-CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
+CalledCNVS<- rbind(patho_criteria_met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
 # TODO for now this should work, but need to add this into the YAML to make seamless.
 
 parent_address <- paste0("./tmp_scratch/", prefix, "/output/") # TODO change this
@@ -912,10 +854,10 @@ generate_CNV_plots <- function(dataset){
 
 }
 
-invisible(lapply(unique(patho.criteria.met$ID),function(x){
+invisible(lapply(unique(patho_criteria_met$ID),function(x){
   browser()
   # This is taking the whole row of unique ID
-  patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
+  patho.id=patho_criteria_met[which(patho_criteria_met$ID==x),]
 
   if(nrow(patho.id)==1){
     IDname_long <- basename(patho.id$ID)

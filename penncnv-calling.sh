@@ -185,21 +185,17 @@ fi
 # Change to base directory for PennCNV execution
 cd "$BASE_DIR" || exit 1
 
-if ! detect_cnv.pl \
-    -test \
-    -confidence \
-    -hmm "$HMM_FILE" \
-    -pfb "$PFB_FILE" \
-    -gcmodel "$GCM_FILE" \
-    -log "$PENNCNV_LOG" \
-    "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
-    -output "$RAW_CNV_OUT" \
-    >>"$PENNCNV_LOG" 2>&1; then
-    log_error "Raw CNV detection failed"
-    cd "$SCRIPT_DIR" || exit 1
-    exit 1
-fi
-
+(cd "$SPLIT_FILES_DIR" && detect_cnv.pl \
+  -test \
+  -confidence \
+  -hmm "$HMM_FILE" \
+  -pfb "$PFB_FILE" \
+  -gcmodel "$GCM_FILE" \
+  -log "$PENNCNV_LOG" \
+  "${SAMPLE_PREFIX}."* \
+  -output "$RAW_CNV_OUT") \
+  >> "$PENNCNV_LOG" 2>&1
+  
 cd "$SCRIPT_DIR" || exit 1
 log_message "Raw CNV detection complete"
 
@@ -229,8 +225,7 @@ log_message "Step 4: Applying quality control filters"
 if ! filter_cnv.pl \
     "${CLEAN_CNVS_DIR}/${SAMPLE_PREFIX}.clean.rawcnv" \
     -numsnp 10 \
-    -length 100k \
-    -qclrrsd 0.3 \
+    -length 10k \
     -qclogfile "$PENNCNV_LOG" \
     -qcpassout "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.qcpass" \
     -qcsumout "${QC_CNVS_DIR}/${SAMPLE_PREFIX}.qcsum" \

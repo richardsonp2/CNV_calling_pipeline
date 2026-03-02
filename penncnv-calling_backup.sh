@@ -195,8 +195,7 @@ if ! detect_cnv.pl \
     -pfb "$PFB_FILE" \
     -gcmodel "$GCM_FILE" \
     -log "$PENNCNV_LOG" \
-    # "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
-    * \
+    "${SPLIT_FILES_DIR}/${SAMPLE_PREFIX}."* \
     -output "$RAW_CNV_OUT" \
     >>"$PENNCNV_LOG" 2>&1; then
     log_error "Raw CNV detection failed"
