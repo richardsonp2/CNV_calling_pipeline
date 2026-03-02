@@ -19,7 +19,7 @@ library("yaml")
 # Changes to make directories more accessable and modifications by Jo Haddon
 # Yaml adaptations, figure updates Peter Richardson
 
-# setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -52,6 +52,10 @@ cnv_qual <- read.table(
   ),
   header = TRUE
 )
+
+# Just for troubleshooting against Nabila data. See where the differences are. TODO delete this
+# cnv_qual <- read.table(nab_qc_sum_file, header = TRUE)
+
 cnv_include <- read.table(
   file = file.path(
     "./tmp_scratch",
@@ -73,13 +77,6 @@ exclude.individuals <- cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) 
 exclude.individuals$GROUP="QC Fail"
 include.individuals <- cnv_qual[-which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
 include.individuals$GROUP="QC Pass"
-
-# exclude.individuals=cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
-# exclude.individuals$GROUP="QC Fail"
-# include.individuals=cnv_qual[-which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
-# include.individuals$GROUP="QC Pass"
-# cnv_qual=rbind(exclude.individuals,include.individuals)
-
 
 cnv_qual <- rbind(exclude.individuals,include.individuals)
 ################################################################################
@@ -128,8 +125,8 @@ vennDiagram(vd_all, names = c(paste("LRR_SD"), paste("NCNV"), paste("WF")))
 title(paste("Individuals excluded using the following parameters: \nLRR>", LRR_SD_thres," ; NCNVs>",NCNV_thres," ; WF>", WF_thres,sep=""))
 #######################################################################################
 
-exclude.individuals=cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
-cnv_qual=cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
+exclude.individuals_ = cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
+cnv_qual_ = cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
 
 
 # Can probably use this function above PR
@@ -268,8 +265,8 @@ CNV_Calls_Exclude <- CNV_Calls[which(as.numeric(as.character(CNV_Calls$SIZE))<10
 CNV_Calls_HQ <- CNV_Calls[!CNV_Calls$ID %in% unlist(exclude.individuals$File),] ### this is file with QC fails excluded I think
 CNV_Calls_QCFail <- CNV_Calls[CNV_Calls$ID %in% unlist(exclude.individuals$File),]##Jo H
 
-hundredKB <- CNV_Calls[which(as.numeric(CNV_Calls_HQ$SIZE) > 100000),]
-hundredKB <- CNV_Calls
+hundredKB_ <- CNV_Calls[which(as.numeric(CNV_Calls_HQ$SIZE) > 100000),] #???
+hundredKB <- CNV_Calls # ??? PR 
 
 ########neuroCNVS##########################################################################
 
@@ -855,7 +852,7 @@ generate_CNV_plots <- function(dataset){
 }
 
 invisible(lapply(unique(patho_criteria_met$ID),function(x){
-  browser()
+  #browser()
   # This is taking the whole row of unique ID
   patho.id=patho_criteria_met[which(patho_criteria_met$ID==x),]
 
