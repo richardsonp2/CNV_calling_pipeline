@@ -167,6 +167,21 @@ kcolumn.pl \
 log_message "File splitting complete"
 
 
+log_message "Building listfile (HPC-compatible ordering)"
+
+LISTFILE="${SPLIT_FILES_DIR}/PennCNV.list"
+
+(
+  cd "$SPLIT_FILES_DIR"
+  ls \
+    | grep "$SAMPLE_PREFIX" \
+    | grep -v txt \
+    | grep -v out \
+    | grep -v err \
+    | grep -v Rmd \
+    > "$(basename "$LISTFILE")"
+)
+log_message "Listfile contains $(wc -l < "$LISTFILE") files"
 # ==============================================================================
 # STEP 2: DETECT RAW CNVs
 # ==============================================================================
@@ -187,15 +202,15 @@ cd "$BASE_DIR" || exit 1
 
 (cd "$SPLIT_FILES_DIR" && detect_cnv.pl \
   -test \
-  -confidence \
   -hmm "$HMM_FILE" \
+  -listfile "$(basename "$LISTFILE")" \
   -pfb "$PFB_FILE" \
-  -gcmodel "$GCM_FILE" \
-  -log "$PENNCNV_LOG" \
-  "${SAMPLE_PREFIX}."* \
-  -output "$RAW_CNV_OUT") \
-  >> "$PENNCNV_LOG" 2>&1
-  
+  --confidence \
+  --log "$PENNCNV_LOG" \
+  --out "$RAW_CNV_OUT" \
+  -gc "$GCM_FILE" \
+  ) >> "$PENNCNV_LOG" 2>&1
+
 cd "$SCRIPT_DIR" || exit 1
 log_message "Raw CNV detection complete"
 
@@ -206,7 +221,8 @@ log_message "Raw CNV detection complete"
 log_message "Step 3: Cleaning and merging CNVs"
 
 if ! clean_cnv.pl \
-    combineseg "$RAW_CNV_OUT" --fraction 0.5 \
+    combineseg "$RAW_CNV_OUT" \
+    -fraction 0.5 \
     -signalfile "$PFB_FILE" \
     -output "${CLEAN_CNVS_DIR}/${SAMPLE_PREFIX}.clean.rawcnv"; then
     log_error "CNV cleaning and merging failed"
