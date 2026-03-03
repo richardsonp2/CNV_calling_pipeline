@@ -207,7 +207,6 @@ log_message "Step 3: Cleaning and merging CNVs"
 
 if ! clean_cnv.pl \
     combineseg "$RAW_CNV_OUT" --fraction 0.5 \
-    -bp \
     -signalfile "$PFB_FILE" \
     -output "${CLEAN_CNVS_DIR}/${SAMPLE_PREFIX}.clean.rawcnv"; then
     log_error "CNV cleaning and merging failed"
