@@ -182,6 +182,7 @@ LISTFILE="${SPLIT_FILES_DIR}/PennCNV.list"
     > "$(basename "$LISTFILE")"
 )
 log_message "Listfile contains $(wc -l < "$LISTFILE") files"
+
 # ==============================================================================
 # STEP 2: DETECT RAW CNVs
 # ==============================================================================
