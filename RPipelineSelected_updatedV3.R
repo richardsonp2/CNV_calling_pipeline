@@ -19,7 +19,7 @@ library("yaml")
 # Changes to make directories more accessable and modifications by Jo Haddon
 # Yaml adaptations, figure updates Peter Richardson
 
-setwd("../../../CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+# setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -28,11 +28,16 @@ LRR_SD_thres=config$thresholds[[1]]
 NCNV_thres=config$thresholds[[2]]
 WF_thres=config$thresholds[[3]] #Penn CNV suggest 0.04 might be a reasonable cutoff
 
+
 # from Jacquemont paper log R ratio-standard deviation <0.35; B allele frequency-standard deviation <0.08; |waviness factor| <0.05, and CNVs <50 observations per array.
 # Need to name for either HPC or local?
 prefix <- config$thresholds$sample_prefix
 cnv_qc_sum <- paste0(prefix, ".qcsum")
 cnv_qc_include <- paste0(prefix, ".qcpass")
+
+# Need to update this to make it adjust accordingly
+folder_path <- paste0("./tmp_scratch/", prefix, "/output/qc_cnvs/")
+
 
 cnv_kk_file <- "./penn_cnv_files/CNVS.KK.2019.Sorted.txt"
 
@@ -47,6 +52,10 @@ cnv_qual <- read.table(
   ),
   header = TRUE
 )
+
+# Just for troubleshooting against Nabila data. See where the differences are. TODO delete this
+# cnv_qual <- read.table(nab_qc_sum_file, header = TRUE)
+
 cnv_include <- read.table(
   file = file.path(
     "./tmp_scratch",
@@ -57,6 +66,10 @@ cnv_include <- read.table(
   ),
   header = TRUE
 )
+
+# cnv_qual=read.table("~/CNV_data/CNV_repo/tmp_scratch/January2026_updated_data_/output/qc_cnvs/January2026_updated_data.qcsum", sep="", header =T)
+# cnv_include=read.table("~/CNV_data/CNV_repo/tmp_scratch/January2026_updated_data_/output/qc_cnvs/January2026_updated_data.qcpass", sep="", header =T)
+
 
 ################################################################################
 ### We get a list of indiviuals who have failed and passed QC based on our predefined parameters
@@ -112,8 +125,8 @@ vennDiagram(vd_all, names = c(paste("LRR_SD"), paste("NCNV"), paste("WF")))
 title(paste("Individuals excluded using the following parameters: \nLRR>", LRR_SD_thres," ; NCNVs>",NCNV_thres," ; WF>", WF_thres,sep=""))
 #######################################################################################
 
-exclude.individuals=cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
-cnv_qual=cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
+exclude.individuals_ = cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
+cnv_qual_ = cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
 
 
 # Can probably use this function above PR
@@ -218,7 +231,7 @@ grid.arrange(arrangeGrob(plot_1, plot_2,ncol=1),arrangeGrob(plot_3, plot_4,ncol=
 ###added by Jo H to combine datafiles
 # TODO make this dynamic for name from yaml file!!
 
-folder_path <- "./tmp_scratch/FullDataTable_reclustered/output/qc_cnvs/"
+
 
 # Get a list of all file names in the folder (e.g., CSV files)
 file_list <- list.files(path = folder_path, pattern = "\\.goodcnv$", full.names = TRUE)
@@ -252,8 +265,8 @@ CNV_Calls_Exclude <- CNV_Calls[which(as.numeric(as.character(CNV_Calls$SIZE))<10
 CNV_Calls_HQ <- CNV_Calls[!CNV_Calls$ID %in% unlist(exclude.individuals$File),] ### this is file with QC fails excluded I think
 CNV_Calls_QCFail <- CNV_Calls[CNV_Calls$ID %in% unlist(exclude.individuals$File),]##Jo H
 
-hundredKB <- CNV_Calls[which(as.numeric(CNV_Calls_HQ$SIZE) > 100000),]
-hundredKB <- CNV_Calls
+hundredKB_ <- CNV_Calls[which(as.numeric(CNV_Calls_HQ$SIZE) > 100000),] #???
+hundredKB <- CNV_Calls # ??? PR 
 
 ########neuroCNVS##########################################################################
 
@@ -271,7 +284,6 @@ cnv_neurodev <- cnv_neurodev[,c(1,4:7)]
 ##################################################################################
 
 cnv_neuro_beta <- unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV_Calls_HQ),function(x){
-#cnv_neuro_beta=unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV.Calls.QCFail),function(x){
   cnv_chr <- CNV_Calls_HQ[x,9]
   cnv_start <- CNV_Calls_HQ[x,10]
   cnv_end <- CNV_Calls_HQ[x,11]
@@ -466,7 +478,7 @@ cnvs_unique <- unique(cnv_neuro_beta_genes$V1)
 
 # This is assigning the criteria met column to 1 or 0 depending on a number of conditions using if else statements
 cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x){
-  #browser()
+  # browser()
   #cnv_patho_criteria[1,12]
 
 
@@ -741,131 +753,97 @@ cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x)
   })))
 })))
 
-patho.criteria.met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==1),]
+patho_criteria_met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==1),]
 
-### Deal with smaller nested CNVs
-
-patho.criteria.met.no.nested <- as.data.frame(do.call(rbind,lapply(unique(patho.criteria.met$ID),function(x){
-
-  ### Select row with individual and criteria met
-
-  ### Selects individuals who have criteria =1
-
-  a=patho.criteria.met[which(patho.criteria.met$ID==x),]
-
-
-
-  if(nrow(a)==1){
-
-    a
-
-  } else if(nrow(a)>1){
-
-
-
-    ### Check nested TAR / 1q21, remove TAR from the results row
-
-    if((length(grep("TAR",a$V1))+length(grep("1q21",a$V1)))==2){
-
-      b1=a[-grep("TAR",a$V1),]
-
-      b1
-
-    }
-
-
-
-    ### Check nested 15q11.2 in PWS/AS
-
-
-
-    if((length(grep("15q",a$V1))+length(grep("PWS",a$V1)))==2){
-
-      b2=a[-grep("15q",a$V1),]
-
-      b2
-
-    }
-
-
-
-    ### Check nested 16p11.2 distal within
-
-
-
-    if((length(grep("distal",a$V1))+length(grep("16p11.2 del",a$V1)))==2){
-
-      b3=a[-grep("distal",a$V1),]
-
-      b3
-
-    }
-
-
-
-    ###  A final statement to deal with what happens if there are still two separate records for an individual
-
-    ### This just prints all lines. Note this does not deal with multiple ND CNVs at the same locus.
-
-    if(exists("b1")==F & exists("b2")==F & exists("b3")==F ){
-
-      a
-
-    }  else if(exists("b1")==T){
-
-      b1
-
-    }
-
-    else if(exists("b2")==T){
-
-      b2
-
-    }
-
-    else if(exists("b3")==T){
-
-      b3
-
-    }
-
+select_non_nested_cnvs <- function(x, dataset){
+  
+  #browser()
+  
+  # Select rows for this individual
+  a <- dataset[dataset$ID == x, ]
+  
+  #Single row, nothing to filter
+  if (nrow(a) == 1){
+    return(a)
   }
+  
+  # Multiple rows, initialise empty outputs 
+  b1 <- b2 <- b3 <- NULL
+  
+  # Rule1 : TAR nested in 1q21
+  if ((length(grep("TAR", a$V1)) + length(grep("1q21", a$V1))) == 2) {
+    b1 <- a[-grep("TAR", a$V1), ]
+  }
+  
+  # Rule2 : 15q11.2 nested in PWS/AS
+  if ((length(grep("15q", a$V1)) + length(grep("PWS", a$V1))) == 2) {
+    b2 <- a[-grep("15q", a$V1), ]
+  }
+  
+  # Rule3 : 16p11.2 nested 
+  if ((length(grep("distal", a$V1)) + length(grep("16p11.2 del", a$V1))) == 2) {
+    b3 <- a[-grep("distal", a$V1), ]
+  }
+  
+  # Final fallback 
+  
+  if (!is.null(b1)) return(b1)
+  if (!is.null(b2)) return(b2)
+  if (!is.null(b3)) return(b3)
+  
+  # Nothing matched → return all rows
+  return(a)
+}
 
-})))
 
-###
 
-patho.criteria.met=patho.criteria.met.no.nested # Why? PR
-patho.criteria.met=patho.criteria.met[order(as.numeric(as.character(patho.criteria.met[,9])),as.numeric(as.character(patho.criteria.met[,10]))),]
-cnv.patho=as.data.frame(table(patho.criteria.met$V1))
-cnv.patho=unique(merge(patho.criteria.met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
+patho_criteria_met.no.nested <- as.data.frame(
+  do.call(
+    rbind,
+    lapply(
+      unique(patho_criteria_met$ID),
+      select_non_nested_cnvs,
+      dataset = patho_criteria_met
+    )
+  )
+)
+
+
+# patho_criteria_met = patho_criteria_met.no.nested # Why? PR
+write.csv(patho_criteria_met, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met.csv")
+write.csv(patho_criteria_met.no.nested, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met_no_nested.csv")
+
+patho_criteria_met = patho_criteria_met[order(as.numeric(as.character(patho_criteria_met[,9])),as.numeric(as.character(patho_criteria_met[,10]))),]
+cnv.patho=as.data.frame(table(patho_criteria_met$V1))
+cnv.patho=unique(merge(patho_criteria_met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
 
 
 cnv.patho$DATASET="JAN26"
 names(cnv.patho)=c("Neurodevelopmental CNV","N","DATASET")
 
-CalledCNVS<- rbind(patho.criteria.met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
+CalledCNVS<- rbind(patho_criteria_met.no.nested,cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),])
 # TODO for now this should work, but need to add this into the YAML to make seamless.
 
-parent_address <- "./tmp_scratch/FullDataTable_reclustered/output/" # TODO change this
+parent_address <- paste0("./tmp_scratch/", prefix, "/output/") # TODO change this
 subdir_routput <- "Routput"
 dir.create(file.path(parent_address, subdir_routput), showWarnings = FALSE)
 
+
+
 write.table(CalledCNVS,
-            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.txt",
+            file = paste0("./tmp_scratch/", prefix, "/output/Routput/called_cnvs.txt"),
             col.names=T,
             row.names=F,
             quote=F,
             sep="\t")
 write.csv(CalledCNVS,
-            file="./tmp_scratch/FullDataTable_reclustered/output/Routput/called_cnvs.csv",
+            file = paste0("./tmp_scratch/", prefix, "/output/Routput/called_cnvs.csv"),
             col.names=T)
 
 ################################################################################################
-# call this something else, probably a legacy from cells?
-split_file_dir <- "./tmp_scratch/FullDataTable_reclustered/output/split_files/"
+split_file_dir <- paste0("./tmp_scratch/", prefix, "/output/split_files/")
 
-r_output_address <- "./tmp_scratch/FullDataTable_reclustered/output/Routput/"
+r_output_address <- paste0("./tmp_scratch/", prefix, "/output/Routput/")
 subdir_plots <- "plots"
 dir.create(file.path(r_output_address, subdir_plots), showWarnings = FALSE)
 
@@ -876,13 +854,12 @@ generate_CNV_plots <- function(dataset){
 
 }
 
-invisible(lapply(unique(patho.criteria.met$ID),function(x){
-
+invisible(lapply(unique(patho_criteria_met$ID),function(x){
+  #browser()
   # This is taking the whole row of unique ID
-  patho.id=patho.criteria.met[which(patho.criteria.met$ID==x),]
+  patho.id=patho_criteria_met[which(patho_criteria_met$ID==x),]
 
   if(nrow(patho.id)==1){
-    #browser()
     IDname_long <- basename(patho.id$ID)
 
     IDname <- sub(".*\\.", "", IDname_long)
@@ -893,7 +870,12 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
     patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]* magic_number_1)
     patho.cnv.upper.coords <- as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]* magic_number_1)
     patho.cnv_chr <- as.numeric(as.character(patho.id[,9]))
-    cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# all need to be in same folder
+    
+    
+    # cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# Reads the filename into fread.  
+    cnv.raw <- as.data.frame(fread(input=paste0(parent_address, "/split_files/", x)),header=T,sep="\t")# Reads the filename into fread.  
+    
+    
     cnv.raw.params <- cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
     cnv.raw.params$GROUP <- c("Probes outside called CNV")
     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
@@ -942,7 +924,7 @@ invisible(lapply(unique(patho.criteria.met$ID),function(x){
 
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
 
-    png(paste("./tmp_scratch/FullDataTable_reclustered/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+    png(paste0("./tmp_scratch/", prefix, "/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
   }
