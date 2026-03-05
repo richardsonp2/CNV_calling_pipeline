@@ -19,7 +19,7 @@ library("yaml")
 # Changes to make directories more accessable and modifications by Jo Haddon
 # Yaml adaptations, figure updates Peter Richardson
 
-# setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+#setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -36,7 +36,7 @@ cnv_qc_sum <- paste0(prefix, ".qcsum")
 cnv_qc_include <- paste0(prefix, ".qcpass")
 
 # Need to update this to make it adjust accordingly
-folder_path <- paste0("./tmp_scratch/", prefix, "/output/qc_cnvs/")
+FOLDER_PATH <- paste0("./tmp_scratch/", prefix, "/output/qc_cnvs/")
 
 
 cnv_kk_file <- "./penn_cnv_files/CNVS.KK.2019.Sorted.txt"
@@ -52,9 +52,6 @@ cnv_qual <- read.table(
   ),
   header = TRUE
 )
-
-# Just for troubleshooting against Nabila data. See where the differences are. TODO delete this
-# cnv_qual <- read.table(nab_qc_sum_file, header = TRUE)
 
 cnv_include <- read.table(
   file = file.path(
@@ -73,15 +70,25 @@ cnv_include <- read.table(
 
 ################################################################################
 ### We get a list of indiviuals who have failed and passed QC based on our predefined parameters
-exclude.individuals <- cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >= WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
+exclude.individuals <- cnv_qual[
+  which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres |
+        as.numeric(as.character(cnv_qual$WF)) >= WF_thres |
+        as.numeric(as.character(cnv_qual$WF))<=-WF_thres |
+        as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
 exclude.individuals$GROUP="QC Fail"
-include.individuals <- cnv_qual[-which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
+
+include.individuals <- cnv_qual[
+  -which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres |
+         as.numeric(as.character(cnv_qual$WF)) >=WF_thres |
+         as.numeric(as.character(cnv_qual$WF))<=-WF_thres |
+         as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
 include.individuals$GROUP="QC Pass"
 
 cnv_qual <- rbind(exclude.individuals,include.individuals)
-################################################################################
+
+# ==============================================================================
 # CNV outliers analysis, visual check
-################################################################################
+# ==============================================================================
 waveform_plot <- ggplot(cnv_qual,aes(x=WF,y=NumCNV,color=GROUP))+
   geom_point(shape=1)+
   xlab("Wavefactor")+
@@ -107,11 +114,12 @@ LRR_SD_freq_plot <- ggplot(cnv_qual, aes(x=LRR_SD)) + geom_histogram(colour="bla
 
 no_outliers_removed <- grid.arrange(arrangeGrob(waveform_plot,LRR_plot,ncol=1),arrangeGrob(baf_plot,LRR_SD_freq_plot,ncol=1),ncol=2, widths=c(1,1))
 
+# ggsave(plot = no_outliers_removed, 
+#        filename = "./tmp_scratch/")
+
 # TODO save this plot as a figure in a figs dir.
 
 ################################################################################
-
-
 
 LRR_SD_vd <- cnv_qual$LRR_SD >= LRR_SD_thres
 NCNV_vd <- cnv_qual$NumCNV >= NCNV_thres
@@ -120,9 +128,10 @@ WF_vd <- (cnv_qual$WF <= (-1 * WF_thres) |  cnv_qual$WF >= WF_thres)
 
 vd_all <- cbind(LRR_SD_vd, NCNV_vd, WF_vd)
 vdiagram_lowest_thres <- vennCounts(vd_all)
-vennDiagram(vd_all, names = c(paste("LRR_SD"), paste("NCNV"), paste("WF")))
 
+vennDiagram(vd_all, names = c(paste("LRR_SD"), paste("NCNV"), paste("WF")))
 title(paste("Individuals excluded using the following parameters: \nLRR>", LRR_SD_thres," ; NCNVs>",NCNV_thres," ; WF>", WF_thres,sep=""))
+
 #######################################################################################
 
 exclude.individuals_ = cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
@@ -130,7 +139,7 @@ cnv_qual_ = cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
 
 
 # Can probably use this function above PR
-plot_function <- function(xvar, group_length = 1){
+plot_cnv_vs_metric <- function(xvar, group_length = 1){
 
   # map input to pretty label
   xlabels <- c(
@@ -156,15 +165,15 @@ plot_function <- function(xvar, group_length = 1){
 }
 
 if (length(unique(cnv_qual$GROUP)) == 1){
-  plot_1 <- plot_function("WF", group_length = 1)
+  plot_1 <- plot_cnv_vs_metric("WF", group_length = 1)
 }else if(length(unique(cnv_qual$GROUP))==2){
-  plot_1 <- plot_function("WF", group_length = 2)
+  plot_1 <- plot_cnv_vs_metric("WF", group_length = 2)
 }
 
 if (length(unique(cnv_qual$GROUP)) == 1){
-  plot_2 <- plot_function("LRR_SD", group_length = 1)
+  plot_2 <- plot_cnv_vs_metric("LRR_SD", group_length = 1)
 }else if(length(unique(cnv_qual$GROUP))==2){
-  plot_2 <- plot_function("LRR_SD", group_length = 2)
+  plot_2 <- plot_cnv_vs_metric("LRR_SD", group_length = 2)
 }
 
 # if(length(unique(cnv_qual$GROUP))==1){
@@ -234,7 +243,7 @@ grid.arrange(arrangeGrob(plot_1, plot_2,ncol=1),arrangeGrob(plot_3, plot_4,ncol=
 
 
 # Get a list of all file names in the folder (e.g., CSV files)
-file_list <- list.files(path = folder_path, pattern = "\\.goodcnv$", full.names = TRUE)
+file_list <- list.files(path = FOLDER_PATH, pattern = "\\.goodcnv$", full.names = TRUE)
 
 # Use lapply to read all files with fread and bind them together
 combined_goodcnv <- rbindlist(lapply(file_list, fread, header = FALSE, fill = TRUE))
@@ -807,11 +816,11 @@ patho_criteria_met.no.nested <- as.data.frame(
     )
   )
 )
-
-
-# patho_criteria_met = patho_criteria_met.no.nested # Why? PR
+### Check I do this right. I still dont really understand this PR 
 write.csv(patho_criteria_met, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met.csv")
 write.csv(patho_criteria_met.no.nested, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met_no_nested.csv")
+
+patho_criteria_met = patho_criteria_met.no.nested # Why? PR
 
 patho_criteria_met = patho_criteria_met[order(as.numeric(as.character(patho_criteria_met[,9])),as.numeric(as.character(patho_criteria_met[,10]))),]
 cnv.patho=as.data.frame(table(patho_criteria_met$V1))
@@ -858,29 +867,59 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
   #browser()
   # This is taking the whole row of unique ID
   patho.id=patho_criteria_met[which(patho_criteria_met$ID==x),]
+  
+  magic_number_1 <- 1.3 ## Ask what this means?
+  # Helper function to grab coordinates, used in both if and else statements below. We should ask about the 1.3 magic number and what this does? 
+  get_coords <- function(patho_id_file){
 
+    patho.cnv.lower.coords <- as.numeric(as.character(patho_id_file[,10]))-(patho_id_file[1,3]* magic_number_1)
+    patho.cnv.upper.coords <- as.numeric(as.character(patho_id_file[,11]))+(patho_id_file[1,3]* magic_number_1)
+    patho_cnv_chr <- as.numeric(as.character(patho_id_file[,9]))
+    
+    coords_list <- list(
+      lower_coords = patho.cnv.lower.coords,
+      upper_coords = patho.cnv.upper.coords,
+      patho_cnv_chr = patho_cnv_chr
+    )
+    
+    return (coords_list)
+  }
+  
   if(nrow(patho.id)==1){
     IDname_long <- basename(patho.id$ID)
 
     IDname <- sub(".*\\.", "", IDname_long)
 
 
-    magic_number_1 <- 1.3 ## Ask what this means?
-
-    patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]* magic_number_1)
-    patho.cnv.upper.coords <- as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]* magic_number_1)
-    patho.cnv_chr <- as.numeric(as.character(patho.id[,9]))
     
+    
+    
+    coords_list <- get_coords(patho.id)
+    #browser()
+    # patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]* magic_number_1)
+    # patho.cnv.upper.coords <- as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]* magic_number_1)
+    # patho.cnv_chr <- as.numeric(as.character(patho.id[,9]))
+    # 
     
     # cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# Reads the filename into fread.  
     cnv.raw <- as.data.frame(fread(input=paste0(parent_address, "/split_files/", x)),header=T,sep="\t")# Reads the filename into fread.  
     
     
-    cnv.raw.params <- cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
+    cnv.raw.params <- cnv.raw[
+      which(
+        cnv.raw$Position >= coords_list[["lower_coords"]] &
+          cnv.raw$Position <= coords_list[["upper_coords"]] &
+          cnv.raw$Chr == coords_list[["patho_cnv_chr"]]),]
+    
     cnv.raw.params$GROUP <- c("Probes outside called CNV")
-    cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
+    cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==coords_list[["patho_cnv_chr"]]),]$GROUP=c("Probes within individually called CNV")
     cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
-
+    
+    # cnv.raw.params <- cnv.raw[which(cnv.raw$Position >= patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
+    # cnv.raw.params$GROUP <- c("Probes outside called CNV")
+    # cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
+    # cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
+    # 
 
     baf.col=grep("Allele",names(cnv.raw.params))
     logr.col=grep("Log",names(cnv.raw.params))
@@ -931,16 +970,30 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
 
   else if(nrow(patho.id)>1){
     lapply(1:nrow(patho.id),function(y){
-
-      patho.cnv.lower.coords=as.numeric(as.character(patho.id[y,10]))-(patho.id[y,3]*1.3)
-      patho.cnv.upper.coords=as.numeric(as.character(patho.id[y,11]))+(patho.id[y,3]*1.3)
-      patho.cnv_chr=as.numeric(as.character(patho.id[y,9]))
-      cnv.raw=as.data.frame(fread(paste0(split_file_dir,x,sep=""),header=T,sep="\t"))
-      cnv.raw.params=cnv.raw[which(cnv.raw$Position>=patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
-      cnv.raw.params$GROUP=c("Probes outside called CNV")
-      cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[y,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[y,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
+      
+      magic_number_1 <- 1.3 
+      
+      # patho.cnv.lower.coords=as.numeric(as.character(patho.id[y,10]))-(patho.id[y,3]* magic_number_1)
+      # patho.cnv.upper.coords=as.numeric(as.character(patho.id[y,11]))+(patho.id[y,3]* magic_number_1)
+      # patho.cnv_chr=as.numeric(as.character(patho.id[y,9]))
+      # Use only the one row for interation
+      coords_list <- get_coords(patho.id[y, , drop = FALSE])
+      
+      cnv.raw <- as.data.frame(fread(input=paste0(parent_address, "/split_files/", x)),header=T,sep="\t")# Reads the filename into fread.  
+      # cnv.raw.params <- cnv.raw[which(cnv.raw$Position >= as.numeric(as.character(coords_list["lower_coords"])) & cnv.raw$Position <= as.numeric(as.character(coords_list["upper_coords"])) & cnv.raw$Chr == coords_list[patho_cnv_chr]),]
+#     cnv.raw.params$GROUP <- c("Probes outside called CNV")
+#     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==coords_list[patho_cnv_chr]),]$GROUP=c("Probes within individually called CNV")
+#     cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
+#     
+      cnv.raw.params <- cnv.raw[
+        which(
+          cnv.raw$Position >= coords_list[["lower_coords"]] &
+          cnv.raw$Position <= coords_list[["upper_coords"]] &
+          cnv.raw$Chr == coords_list[["patho_cnv_chr"]]),]
+      
+      cnv.raw.params$GROUP <- c("Probes outside called CNV")
+      cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==coords_list[["patho_cnv_chr"]]),]$GROUP=c("Probes within individually called CNV")
       cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
-
     })
   }
 
