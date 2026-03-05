@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "bashdb",
+            "request": "launch",
+            "name": "Debug PennCNV Pipeline",
+            "program": "${file}",
+            "args": [
+                "${workspaceFolder}/input_data/January2026_updated_data.txt"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "terminalKind": "integrated"
+        }
+    ]
+}
