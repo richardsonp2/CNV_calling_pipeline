@@ -4,3 +4,4 @@ FullDataTable_reclustered.txt
 FullData_test_JAN2026.txt
 exon_files
 input_data/*
+*.tar*

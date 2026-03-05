@@ -19,7 +19,7 @@ library("yaml")
 # Changes to make directories more accessable and modifications by Jo Haddon
 # Yaml adaptations, figure updates Peter Richardson
 
-#setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -35,7 +35,7 @@ prefix <- config$thresholds$sample_prefix
 cnv_qc_sum <- paste0(prefix, ".qcsum")
 cnv_qc_include <- paste0(prefix, ".qcpass")
 
-# Need to update this to make it adjust accordingly
+# TODO Need to update this to make it adjust accordingly
 FOLDER_PATH <- paste0("./tmp_scratch/", prefix, "/output/qc_cnvs/")
 
 
@@ -849,7 +849,9 @@ write.csv(CalledCNVS,
             file = paste0("./tmp_scratch/", prefix, "/output/Routput/called_cnvs.csv"),
             col.names=T)
 
-################################################################################################
+# ==============================================================================
+# Generate the split plots directory 
+# ==============================================================================
 split_file_dir <- paste0("./tmp_scratch/", prefix, "/output/split_files/")
 
 r_output_address <- paste0("./tmp_scratch/", prefix, "/output/Routput/")
@@ -890,18 +892,8 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
 
     IDname <- sub(".*\\.", "", IDname_long)
 
-
-    
-    
-    
     coords_list <- get_coords(patho.id)
-    #browser()
-    # patho.cnv.lower.coords <- as.numeric(as.character(patho.id[,10]))-(patho.id[1,3]* magic_number_1)
-    # patho.cnv.upper.coords <- as.numeric(as.character(patho.id[,11]))+(patho.id[1,3]* magic_number_1)
-    # patho.cnv_chr <- as.numeric(as.character(patho.id[,9]))
-    # 
     
-    # cnv.raw <- as.data.frame(fread(input=x),header=T,sep="\t")# Reads the filename into fread.  
     cnv.raw <- as.data.frame(fread(input=paste0(parent_address, "/split_files/", x)),header=T,sep="\t")# Reads the filename into fread.  
     
     
@@ -912,20 +904,18 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
           cnv.raw$Chr == coords_list[["patho_cnv_chr"]]),]
     
     cnv.raw.params$GROUP <- c("Probes outside called CNV")
-    cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==coords_list[["patho_cnv_chr"]]),]$GROUP=c("Probes within individually called CNV")
-    cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
+    cnv.raw.params[
+                    which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) &
+                          cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) &
+                          cnv.raw.params$Chr == coords_list[["patho_cnv_chr"]]),]$GROUP = c("Probes within individually called CNV")
+    cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP,
+                                   levels = c("Probes within individually called CNV","Probes outside called CNV"))
     
-    # cnv.raw.params <- cnv.raw[which(cnv.raw$Position >= patho.cnv.lower.coords & cnv.raw$Position<=patho.cnv.upper.coords & cnv.raw$Chr==patho.cnv_chr),]
-    # cnv.raw.params$GROUP <- c("Probes outside called CNV")
-    # cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==patho.cnv_chr),]$GROUP=c("Probes within individually called CNV")
-    # cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
-    # 
-
     baf.col=grep("Allele",names(cnv.raw.params))
     logr.col=grep("Log",names(cnv.raw.params))
 
 
-    # This should work, but if it's completely broken other functions below
+    # Generates figures that show BAF and LRR for the split files plots directory
     base_position_figure <- function(type = "baf"){
       #browser()
       if (type == "baf"){
@@ -962,7 +952,7 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
     lrr <- base_position_figure("lrr")
 
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
-
+    
     png(paste0("./tmp_scratch/", prefix, "/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
     grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     dev.off()
@@ -973,18 +963,12 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
       
       magic_number_1 <- 1.3 
       
-      # patho.cnv.lower.coords=as.numeric(as.character(patho.id[y,10]))-(patho.id[y,3]* magic_number_1)
-      # patho.cnv.upper.coords=as.numeric(as.character(patho.id[y,11]))+(patho.id[y,3]* magic_number_1)
-      # patho.cnv_chr=as.numeric(as.character(patho.id[y,9]))
+
       # Use only the one row for interation
       coords_list <- get_coords(patho.id[y, , drop = FALSE])
       
       cnv.raw <- as.data.frame(fread(input=paste0(parent_address, "/split_files/", x)),header=T,sep="\t")# Reads the filename into fread.  
-      # cnv.raw.params <- cnv.raw[which(cnv.raw$Position >= as.numeric(as.character(coords_list["lower_coords"])) & cnv.raw$Position <= as.numeric(as.character(coords_list["upper_coords"])) & cnv.raw$Chr == coords_list[patho_cnv_chr]),]
-#     cnv.raw.params$GROUP <- c("Probes outside called CNV")
-#     cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==coords_list[patho_cnv_chr]),]$GROUP=c("Probes within individually called CNV")
-#     cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
-#     
+
       cnv.raw.params <- cnv.raw[
         which(
           cnv.raw$Position >= coords_list[["lower_coords"]] &
