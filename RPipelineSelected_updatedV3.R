@@ -19,7 +19,7 @@ library("yaml")
 # Changes to make directories more accessable and modifications by Jo Haddon
 # Yaml adaptations, figure updates Peter Richardson
 
-setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
+#setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
 # All of the variables to set here including addresses are set in the yaml file.
 config <- read_yaml("penncnv_config.yaml")
@@ -865,6 +865,39 @@ generate_CNV_plots <- function(dataset){
 
 }
 
+base_position_figure <- function(data, type = "baf"){
+  browser()
+  if (type == "baf"){
+    y_params = data[[,baf.col]]
+    y_title <- "B-Allele Frequency"
+    intercept_val <- 0.5
+    y_lims <- c(0,1)
+  }
+  else if (type == "lrr"){
+    y_params = data[[,logr.col]]
+    y_title <- "Log R Ratio"
+    intercept_val <- 0
+    y_lims <- c(-1,1)
+  }
+  else {
+    stop("Unknown type. Use 'baf' or 'lrr'.")
+  }
+  
+  figure=ggplot(data=data,aes(x=data[,3],y=y_params,color=as.factor(GROUP))) +
+    geom_point(shape=1) +
+    xlab("Base Position")+
+    ylab(y_title)+
+    ggtitle(paste(IDname, patho.id$V1, sep=" "))+
+    geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
+    geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
+    geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
+    ylim(y_lims)+
+    labs(color="CNV Probe Legend")
+  
+  return (figure)
+}
+# cnv.raw.params
+
 invisible(lapply(unique(patho_criteria_met$ID),function(x){
   #browser()
   # This is taking the whole row of unique ID
@@ -916,40 +949,9 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
 
 
     # Generates figures that show BAF and LRR for the split files plots directory
-    base_position_figure <- function(type = "baf"){
-      #browser()
-      if (type == "baf"){
-        y_params = cnv.raw.params[,baf.col]
-        y_title <- "B-Allele Frequency"
-        intercept_val <- 0.5
-        y_lims <- c(0,1)
-      }
-      else if (type == "lrr"){
-        y_params = cnv.raw.params[,logr.col]
-        y_title <- "Log R Ratio"
-        intercept_val <- 0
-        y_lims <- c(-1,1)
-      }
-      else {
-        stop("Unknown type. Use 'baf' or 'lrr'.")
-      }
 
-      figure=ggplot(data=cnv.raw.params,aes(x=cnv.raw.params[,3],y=y_params,color=as.factor(GROUP))) +
-        geom_point(shape=1) +
-        xlab("Base Position")+
-        ylab(y_title)+
-        ggtitle(paste(IDname, patho.id$V1, sep=" "))+
-        geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
-        geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
-        geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
-        ylim(y_lims)+
-        labs(color="CNV Probe Legend")
-
-      return (figure)
-    }
-
-    baf <- base_position_figure("baf")
-    lrr <- base_position_figure("lrr")
+    baf <- base_position_figure(data = cnv.raw.params, "baf")
+    lrr <- base_position_figure(data = cnv.raw.params, "lrr")
 
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     
@@ -978,6 +980,19 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
       cnv.raw.params$GROUP <- c("Probes outside called CNV")
       cnv.raw.params[which(cnv.raw.params$Position>=as.numeric(as.character(patho.id[,10])) & cnv.raw.params$Position<=as.numeric(as.character(patho.id[,11])) & cnv.raw.params$Chr==coords_list[["patho_cnv_chr"]]),]$GROUP=c("Probes within individually called CNV")
       cnv.raw.params$GROUP <- factor(cnv.raw.params$GROUP, levels = c("Probes within individually called CNV","Probes outside called CNV"))
+
+      baf.col=grep("Allele",names(cnv.raw.params))
+      logr.col=grep("Log",names(cnv.raw.params))
+      
+      baf <- base_position_figure(data = cnv.raw.params, "baf")
+      lrr <- base_position_figure(data = cnv.raw.params, "lrr")
+      
+      combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
+      
+      png(paste0("./tmp_scratch/", prefix, "/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+      grid.arrange(arrangeGrob(baf,lrr,ncol=1))
+      dev.off()
+      
     })
   }
 
