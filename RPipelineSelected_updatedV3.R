@@ -865,37 +865,7 @@ generate_CNV_plots <- function(dataset){
 
 }
 
-base_position_figure <- function(data, type = "baf"){
-  browser()
-  if (type == "baf"){
-    y_params = data[[,baf.col]]
-    y_title <- "B-Allele Frequency"
-    intercept_val <- 0.5
-    y_lims <- c(0,1)
-  }
-  else if (type == "lrr"){
-    y_params = data[[,logr.col]]
-    y_title <- "Log R Ratio"
-    intercept_val <- 0
-    y_lims <- c(-1,1)
-  }
-  else {
-    stop("Unknown type. Use 'baf' or 'lrr'.")
-  }
-  
-  figure=ggplot(data=data,aes(x=data[,3],y=y_params,color=as.factor(GROUP))) +
-    geom_point(shape=1) +
-    xlab("Base Position")+
-    ylab(y_title)+
-    ggtitle(paste(IDname, patho.id$V1, sep=" "))+
-    geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
-    geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
-    geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
-    ylim(y_lims)+
-    labs(color="CNV Probe Legend")
-  
-  return (figure)
-}
+
 # cnv.raw.params
 
 invisible(lapply(unique(patho_criteria_met$ID),function(x){
@@ -922,11 +892,9 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
   
   if(nrow(patho.id)==1){
     IDname_long <- basename(patho.id$ID)
-
     IDname <- sub(".*\\.", "", IDname_long)
-
     coords_list <- get_coords(patho.id)
-    
+
     cnv.raw <- as.data.frame(fread(input=paste0(parent_address, "/split_files/", x)),header=T,sep="\t")# Reads the filename into fread.  
     
     
@@ -950,8 +918,40 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
 
     # Generates figures that show BAF and LRR for the split files plots directory
 
-    baf <- base_position_figure(data = cnv.raw.params, "baf")
-    lrr <- base_position_figure(data = cnv.raw.params, "lrr")
+    base_position_figure <- function(data, baf.col, log.col, IDname, type = "baf"){
+      #browser()
+      if (type == "baf"){
+        y_params = data[,baf.col]
+        y_title <- "B-Allele Frequency"
+        intercept_val <- 0.5
+        y_lims <- c(0,1)
+      }
+      else if (type == "lrr"){
+        y_params = data[,logr.col]
+        y_title <- "Log R Ratio"
+        intercept_val <- 0
+        y_lims <- c(-1,1)
+      }
+      else {
+        stop("Unknown type. Use 'baf' or 'lrr'.")
+      }
+      
+      figure=ggplot(data=data,aes(x=data[,3],y=y_params,color=as.factor(GROUP))) +
+        geom_point(shape=1) +
+        xlab("Base Position")+
+        ylab(y_title)+
+        ggtitle(paste(IDname, patho.id$V1, sep=" "))+
+        geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
+        geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
+        geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
+        ylim(y_lims)+
+        labs(color="CNV Probe Legend")
+      
+      return (figure)
+    }
+    
+    baf <- base_position_figure(data = cnv.raw.params, baf.col, baf.log, IDname, "baf")
+    lrr <- base_position_figure(data = cnv.raw.params, baf.col, baf.log, IDname, "lrr")
 
     combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
     
@@ -962,6 +962,10 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
 
   else if(nrow(patho.id)>1){
     lapply(1:nrow(patho.id),function(y){
+      
+      IDname_long <- basename(patho.id$ID)
+      IDname <- sub(".*\\.", "", IDname_long)
+      coords_list <- get_coords(patho.id)
       
       magic_number_1 <- 1.3 
       
@@ -984,12 +988,60 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
       baf.col=grep("Allele",names(cnv.raw.params))
       logr.col=grep("Log",names(cnv.raw.params))
       
-      baf <- base_position_figure(data = cnv.raw.params, "baf")
-      lrr <- base_position_figure(data = cnv.raw.params, "lrr")
+      base_position_figure <- function(data, baf.col, log.col, IDname, type = "baf"){
+        #browser()
+        if (type == "baf"){
+          y_params = data[,baf.col]
+          y_title <- "B-Allele Frequency"
+          intercept_val <- 0.5
+          y_lims <- c(0,1)
+        }
+        else if (type == "lrr"){
+          y_params = data[,logr.col]
+          y_title <- "Log R Ratio"
+          intercept_val <- 0
+          y_lims <- c(-1,1)
+        }
+        else {
+          stop("Unknown type. Use 'baf' or 'lrr'.")
+        }
+        
+        figure=ggplot(data=data,aes(x=data[,3],y=y_params,color=as.factor(GROUP))) +
+          geom_point(shape=1) +
+          xlab("Base Position")+
+          ylab(y_title)+
+          ggtitle(paste(IDname, patho.id$V1, sep=" "))+
+          geom_hline(yintercept=0.5, linetype="dashed", color = "Black")+
+          geom_vline(xintercept=patho.id[,14], linetype="dashed", color = "Green")+
+          geom_vline(xintercept=patho.id[,15], linetype="dashed", color = "Green")+
+          ylim(y_lims)+
+          labs(color="CNV Probe Legend")
+        
+        return (figure)
+      }
       
+      baf <- base_position_figure(data = cnv.raw.params, baf.col, baf.log, IDname, "baf")
+      lrr <- base_position_figure(data = cnv.raw.params, baf.col, baf.log, IDname, "lrr")
+      browser()
+      id <- patho.id$V1[1]
+      IDname <- IDname[1] # this is just to get a single line for the address path
       combined_plot <- grid.arrange(arrangeGrob(baf,lrr,ncol=1))
+      file_path <- paste0(
+        "./tmp_scratch/", prefix, "/output/Routput/plots/",
+        IDname, "___", id, ".png" # Check with Jo that this is okay? Any edge cases?
+      )
       
-      png(paste0("./tmp_scratch/", prefix, "/output/Routput/plots/",IDname,"___",patho.id$V1,".png",sep=""), width = 10, height = 4, units = 'in', res = 300)
+      if (file.exists(file_path)) {
+        file_path <- paste0(
+          "./tmp_scratch/", prefix, "/output/Routput/plots/",
+          IDname, "___", id, "another_copy.png"
+        )
+      }
+      
+
+      print(file_path)
+      
+      png(file_path, width = 10, height = 4, units = 'in', res = 300)
       grid.arrange(arrangeGrob(baf,lrr,ncol=1))
       dev.off()
       
