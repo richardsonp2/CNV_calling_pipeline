@@ -4,4 +4,11 @@ FullDataTable_reclustered.txt
 FullData_test_JAN2026.txt
 exon_files
 input_data/*
-*.tar*
+.vscode
+
+# Security so not to upload sensitive data
+*.tar.gz
+*.tar
+*.zip
+*.bam
+*.bed.gz
