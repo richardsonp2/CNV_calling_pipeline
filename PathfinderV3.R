@@ -17,7 +17,7 @@ library("yaml")
 #- "Elliott Rees"
 #- "George Kirov"
 # Changes to make directories more accessable and modifications by Jo Haddon
-# Yaml adaptations, figure updates Peter Richardson
+# Yaml adaptations, figure updates by Peter Richardson
 
 # setwd("./CNV_data/CNV_repo/") # Just temporary while I work on getting this running. Then I will just call it from the current dir anyway.
 
@@ -53,9 +53,6 @@ cnv_qual <- read.table(
   header = TRUE
 )
 
-# Just for troubleshooting against Nabila data. See where the differences are. TODO delete this
-# cnv_qual <- read.table(nab_qc_sum_file, header = TRUE)
-
 cnv_include <- read.table(
   file = file.path(
     "./tmp_scratch",
@@ -66,10 +63,6 @@ cnv_include <- read.table(
   ),
   header = TRUE
 )
-
-# cnv_qual=read.table("~/CNV_data/CNV_repo/tmp_scratch/January2026_updated_data_/output/qc_cnvs/January2026_updated_data.qcsum", sep="", header =T)
-# cnv_include=read.table("~/CNV_data/CNV_repo/tmp_scratch/January2026_updated_data_/output/qc_cnvs/January2026_updated_data.qcpass", sep="", header =T)
-
 
 ################################################################################
 ### We get a list of indiviuals who have failed and passed QC based on our predefined parameters
@@ -125,8 +118,8 @@ vennDiagram(vd_all, names = c(paste("LRR_SD"), paste("NCNV"), paste("WF")))
 title(paste("Individuals excluded using the following parameters: \nLRR>", LRR_SD_thres," ; NCNVs>",NCNV_thres," ; WF>", WF_thres,sep=""))
 #######################################################################################
 
-exclude.individuals_ = cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
-cnv_qual_ = cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
+exclude.individuals <- cnv_qual[which(as.numeric(as.character(cnv_qual$NumCNV)) >= NCNV_thres | as.numeric(as.character(cnv_qual$WF)) >=WF_thres | as.numeric(as.character(cnv_qual$WF))<=-WF_thres | as.numeric(as.character(cnv_qual$LRR_SD)) >=LRR_SD_thres),]
+cnv_qual_ <- cnv_qual[! cnv_qual$File %in% unlist(exclude.individuals$File),]
 
 
 # Can probably use this function above PR
@@ -167,55 +160,6 @@ if (length(unique(cnv_qual$GROUP)) == 1){
   plot_2 <- plot_function("LRR_SD", group_length = 2)
 }
 
-# if(length(unique(cnv_qual$GROUP))==1){
-#   plot1no=ggplot(cnv_qual,aes(x=WF,y=NumCNV,color=GROUP)) +
-#     geom_point(shape=1) +
-#     xlab("Wavefactor") +
-#     ylab("N CNVs") +
-#     scale_color_manual(values=c("#56B4E9")) +
-#     theme(legend.position="none")
-# } else if(length(unique(cnv_qual$GROUP))==2){
-#   plot1no=ggplot(cnv_qual,aes(x=WF,y=NumCNV,color=GROUP)) +
-#     geom_point(shape=1) +
-#     xlab("Wavefactor") +
-#     ylab("N CNVs") +
-#     scale_color_manual(values=c("#E69F00", "#56B4E9")) +
-#     theme(legend.position="none")
-# }
-
-# if(length(unique(cnv_qual$GROUP))==1){
-#   plot2no=ggplot(cnv_qual,aes(x=LRR_SD,y=NumCNV,color=GROUP))+
-#     geom_point(shape=1)+
-#     xlab("LRR SD")+
-#     ylab("N CNVs")+
-#     scale_color_manual(values=c("#56B4E9"))+
-#     theme(legend.position="bottom")
-# } else if(length(unique(cnv_qual$GROUP))==2){
-#   plot2no=ggplot(cnv_qual,aes(x=LRR_SD,y=NumCNV,color=GROUP))+
-#     geom_point(shape=1)+
-#     xlab("LRR SD")+
-#     ylab("N CNVs")+
-#     scale_color_manual(values=c("#E69F00","#56B4E9"))+
-#     theme(legend.position="bottom")
-# }
-
-# if(length(unique(cnv_qual$GROUP))==1){
-#   plot2no=ggplot(cnv_qual,aes(x=LRR_SD,y=NumCNV,color=GROUP))+
-#     geom_point(shape=1)+
-#     xlab("LRR SD")+
-#     ylab("N CNVs")+
-#     scale_color_manual(values=c("#56B4E9"))+
-#     theme(legend.position="bottom")
-# } else if(length(unique(cnv_qual$GROUP))==2){
-#   plot2no=ggplot(cnv_qual,aes(x=LRR_SD,y=NumCNV,color=GROUP))+
-#     geom_point(shape=1)+
-#     xlab("LRR SD")+
-#     ylab("N CNVs")+
-#     scale_color_manual(values=c("#E69F00","#56B4E9"))+
-#     theme(legend.position="bottom")
-# }
-# Probably can put this in a fucntion. But only 1 repeat so far. Check rest of script PR
-
 plot_3 <- ggplot(cnv_qual, aes(x=BAF_drift)) + geom_histogram(alpha=.5, position="identity",colour="black", fill="white")+
   xlab("B-Allele Frequency Drift")+
   ylab("Frequency")
@@ -228,11 +172,6 @@ plot_4 <- ggplot(cnv_qual, aes(x=LRR_SD)) + geom_histogram(colour="black", fill=
 grid.arrange(arrangeGrob(plot_1, plot_2,ncol=1),arrangeGrob(plot_3, plot_4,ncol=1),ncol=2, widths=c(1,1))
 #############################################
 
-###added by Jo H to combine datafiles
-# TODO make this dynamic for name from yaml file!!
-
-
-
 # Get a list of all file names in the folder (e.g., CSV files)
 file_list <- list.files(path = folder_path, pattern = "\\.goodcnv$", full.names = TRUE)
 
@@ -243,53 +182,56 @@ combined_goodcnv <- rbindlist(lapply(file_list, fread, header = FALSE, fill = TR
 
 ### Sample /CNV exclusions
 
-CNV_Calls <- as.data.frame(combined_goodcnv)
+CNV_Calls        <- as.data.frame(combined_goodcnv)
 names(CNV_Calls) <- c("COORDS","NPROBES","SIZE","TYPE","ID","START_PROBE","END_PROBE","CONF")
 
-CNV_Calls$NPROBES=gsub("numsnp=","",CNV_Calls$NPROBES)
-CNV_Calls$SIZE=gsub("length=","",CNV_Calls$SIZE)
-CNV_Calls$SIZE=gsub(",","",CNV_Calls$SIZE)
-CNV_Calls$CHR=gsub("chr","",do.call(rbind,strsplit(CNV_Calls$COORDS,split=":"))[,1])
-CNV_Calls$CONF=gsub("conf=","",CNV_Calls$CONF)
+CNV_Calls$NPROBES <- gsub("numsnp=","",CNV_Calls$NPROBES)
+CNV_Calls$SIZE    <- gsub("length=","",CNV_Calls$SIZE)
+CNV_Calls$SIZE    <- gsub(",","",CNV_Calls$SIZE)
+CNV_Calls$CHR     <- gsub("chr","",do.call(rbind,strsplit(CNV_Calls$COORDS,split=":"))[,1])
+CNV_Calls$CONF    <- gsub("conf=","",CNV_Calls$CONF)
 
-CNV_Calls$CONF=as.numeric(as.character(CNV_Calls$CONF)) # Why doing this? They are float numbers? If NA (or something else) we should remove
-CNV_Calls$START=as.numeric(gsub(",","",do.call(rbind,strsplit(gsub("chr","",do.call(rbind,strsplit(CNV_Calls$COORDS,split="-"))[,1]),split=":"))[,2]))
-CNV_Calls$END=as.numeric(gsub(",","",do.call(rbind,strsplit(CNV_Calls$COORDS,split="-"))[,2]))
+CNV_Calls$CONF    <- as.numeric(as.character(CNV_Calls$CONF)) # Why doing this? They are float numbers? If NA (or something else) we should remove
+CNV_Calls$START   <- as.numeric(gsub(",","",do.call(rbind,strsplit(gsub("chr","",do.call(rbind,strsplit(CNV_Calls$COORDS,split="-"))[,1]),split=":"))[,2]))
+CNV_Calls$END     <- as.numeric(gsub(",","",do.call(rbind,strsplit(CNV_Calls$COORDS,split="-"))[,2]))
 
-CNV_Calls <- CNV_Calls[which(as.numeric(as.character(CNV_Calls$SIZE))>100000) & as.numeric(as.character(CNV_Calls$NPROBES))>=20 & CNV_Calls$CONF>=10,]
+CNV_Calls         <- CNV_Calls[which(as.numeric(as.character(CNV_Calls$SIZE))>100000) & as.numeric(as.character(CNV_Calls$NPROBES))>=20 & CNV_Calls$CONF>=10,]
 #CNV_Calls_Exclude=CNV_Calls[which(as.numeric(as.character(CNV_Calls$SIZE))<20000 | as.numeric(as.character(CNV_Calls$NPROBES))<10 | CNV_Calls$CONF<10),]
 CNV_Calls_Exclude <- CNV_Calls[which(as.numeric(as.character(CNV_Calls$SIZE))<100000 | as.numeric(as.character(CNV_Calls$NPROBES))<10 | CNV_Calls$CONF<10),]
 
-#CNV_Calls=CNV_Calls[grep("_R1$",CNV_Calls$ID),]
+CNV_Calls_HQ      <- CNV_Calls[!CNV_Calls$ID %in% unlist(exclude.individuals$File),] ### this is file with QC fails excluded I think
+CNV_Calls_QCFail  <- CNV_Calls[CNV_Calls$ID %in% unlist(exclude.individuals$File),]##Jo H
 
-CNV_Calls_HQ <- CNV_Calls[!CNV_Calls$ID %in% unlist(exclude.individuals$File),] ### this is file with QC fails excluded I think
-CNV_Calls_QCFail <- CNV_Calls[CNV_Calls$ID %in% unlist(exclude.individuals$File),]##Jo H
-
-hundredKB_ <- CNV_Calls[which(as.numeric(CNV_Calls_HQ$SIZE) > 100000),] #???
-hundredKB <- CNV_Calls # ??? PR 
+hundredKB_        <- CNV_Calls[which(as.numeric(CNV_Calls_HQ$SIZE) > 100000),] #???
+hundredKB         <- CNV_Calls # ??? PR 
 
 ########neuroCNVS##########################################################################
 
-cnv_neurodev <- read.table(file=cnv_kk_file, sep="\t", stringsAsFactors=F)
+cnv_neurodev           <- read.table(file=cnv_kk_file, sep="\t", stringsAsFactors=F)
 
-cnv_neurodev$CHR <- gsub("chr","",do.call(rbind,strsplit(cnv_neurodev$V3,split=":"))[,1])
-cnv_neurodev$START <- as.numeric(gsub(",","",do.call(rbind,strsplit(gsub("chr","",do.call(rbind,strsplit(cnv_neurodev$V3,split="-"))[,1]),split=":"))[,2]))
-cnv_neurodev$END <- as.numeric(gsub(",","",do.call(rbind,strsplit(cnv_neurodev$V3,split="-"))[,2]))
-cnv_neurodev$CLASS <- do.call(rbind,lapply(1:nrow(cnv_neurodev),function(x){
+cnv_neurodev$CHR       <- gsub("chr","",do.call(rbind,strsplit(cnv_neurodev$V3,split=":"))[,1])
+cnv_neurodev$START     <- as.numeric(gsub(",","",do.call(rbind,strsplit(gsub("chr","",do.call(rbind,strsplit(cnv_neurodev$V3,split="-"))[,1]),split=":"))[,2]))
+cnv_neurodev$END       <- as.numeric(gsub(",","",do.call(rbind,strsplit(cnv_neurodev$V3,split="-"))[,2]))
+
+cnv_neurodev$CLASS     <- do.call(rbind,lapply(1:nrow(cnv_neurodev),function(x){
   ifelse(length(grep("del",cnv_neurodev[x,1]))>0,yes=1,no=3)
 }))
+
 names(cnv_neurodev)[2] <- c("LOCUS")
-cnv_neurodev <- cnv_neurodev[,c(1,4:7)]
+cnv_neurodev           <- cnv_neurodev[,c(1,4:7)]
 
 ##################################################################################
 
 cnv_neuro_beta <- unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV_Calls_HQ),function(x){
-  cnv_chr <- CNV_Calls_HQ[x,9]
-  cnv_start <- CNV_Calls_HQ[x,10]
-  cnv_end <- CNV_Calls_HQ[x,11]
+  browser()
+  cnv_chr   <- CNV_Calls_HQ[x,"CHR"]
+  cnv_start <- CNV_Calls_HQ[x, "START"]
+  cnv_end   <- CNV_Calls_HQ[x, "END"]
 
   ### CNV spans entire region
-  cnv_neurodev.match <- cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr & cnv_start<=cnv_neurodev$START & cnv_end>=cnv_neurodev$END),]
+  cnv_neurodev.match <- cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr &
+                                             cnv_start<=cnv_neurodev$START &
+                                             cnv_end>=cnv_neurodev$END),]
 
   if(nrow(cnv_neurodev.match)>0){
     cnv.prop=1
@@ -297,7 +239,10 @@ cnv_neuro_beta <- unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV_Calls_HQ)
   } else if(nrow(cnv_neurodev.match)==0){
 
     ### CNV start is less than the start of the nd cnv and end of the CNV is less than than end of the nd cnv
-    cnv_neurodev.match=cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr & cnv_start<=cnv_neurodev$START & cnv_end<=cnv_neurodev$END & cnv_end>=cnv_neurodev$START),]
+    cnv_neurodev.match <- cnv_neurodev[which(cnv_neurodev$CHR==cnv_chr &
+                                               cnv_start<=cnv_neurodev$START &
+                                               cnv_end<=cnv_neurodev$END & 
+                                               cnv_end>=cnv_neurodev$START),]
 
     if(nrow(cnv_neurodev.match)>0){
       cnv_neurodev.match.start=cnv_neurodev.match$START
@@ -478,7 +423,7 @@ cnvs_unique <- unique(cnv_neuro_beta_genes$V1)
 
 # This is assigning the criteria met column to 1 or 0 depending on a number of conditions using if else statements
 cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x){
-  # browser()
+  browser()
   #cnv_patho_criteria[1,12]
 
 
@@ -754,6 +699,7 @@ cnv_patho_criteria <- as.data.frame(do.call(rbind,lapply(cnvs_unique,function(x)
 })))
 
 patho_criteria_met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==1),]
+patho_criteria_not_met <- cnv_patho_criteria[which(cnv_patho_criteria$CRITERIA_MET==0),]
 
 select_non_nested_cnvs <- function(x, dataset){
   
@@ -813,9 +759,9 @@ patho_criteria_met.no.nested <- as.data.frame(
 write.csv(patho_criteria_met, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met.csv")
 write.csv(patho_criteria_met.no.nested, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met_no_nested.csv")
 
-patho_criteria_met = patho_criteria_met[order(as.numeric(as.character(patho_criteria_met[,9])),as.numeric(as.character(patho_criteria_met[,10]))),]
-cnv.patho=as.data.frame(table(patho_criteria_met$V1))
-cnv.patho=unique(merge(patho_criteria_met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
+patho_criteria_met <- patho_criteria_met[order(as.numeric(as.character(patho_criteria_met[,9])),as.numeric(as.character(patho_criteria_met[,10]))),]
+cnv.patho = as.data.frame(table(patho_criteria_met$V1))
+cnv.patho = unique(merge(patho_criteria_met[,c(12,9,10)],cnv.patho,by.x="V1",by.y="Var1",sort=F)[,c(1,4)])
 
 
 cnv.patho$DATASET="JAN26"
@@ -944,7 +890,9 @@ invisible(lapply(unique(patho_criteria_met$ID),function(x){
     })
   }
 
-}))
+}
+)
+)
 
 
 
