@@ -223,8 +223,8 @@ cnv_neurodev           <- cnv_neurodev[,c(1,4:7)]
 ##################################################################################
 
 cnv_neuro_beta <- unique(as.data.frame(do.call(rbind,lapply(1:nrow(CNV_Calls_HQ),function(x){
-  browser()
-  cnv_chr   <- CNV_Calls_HQ[x,"CHR"]
+  #browser()
+  cnv_chr   <- CNV_Calls_HQ[x, "CHR"]
   cnv_start <- CNV_Calls_HQ[x, "START"]
   cnv_end   <- CNV_Calls_HQ[x, "END"]
 
@@ -756,8 +756,8 @@ patho_criteria_met.no.nested <- as.data.frame(
 
 
 # patho_criteria_met = patho_criteria_met.no.nested # Why? PR
-write.csv(patho_criteria_met, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met.csv")
-write.csv(patho_criteria_met.no.nested, file = "./tmp_scratch/January2026_updated_data/output/Routput/patho_criteria_met_no_nested.csv")
+write.csv(patho_criteria_met, file = "./tmp_scratch/APRIL2026_updated_data/output/Routput/patho_criteria_met.csv")
+write.csv(patho_criteria_met.no.nested, file = "./tmp_scratch/APRIL2026_updated_data/output/Routput/patho_criteria_met_no_nested.csv")
 
 patho_criteria_met <- patho_criteria_met[order(as.numeric(as.character(patho_criteria_met[,9])),as.numeric(as.character(patho_criteria_met[,10]))),]
 cnv.patho = as.data.frame(table(patho_criteria_met$V1))
